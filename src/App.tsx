@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Globe } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Globe } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -630,18 +630,13 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
       <div className="max-w-4xl mx-auto">
         <header className="mb-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-primary to-accent rounded-xl p-2">
-                <Smiley size={28} weight="fill" className="text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
-                  Chatter Box
-                </h1>
-                <p className="text-muted-foreground text-sm md:text-base">
-                  Your AI assistant that learns from your documents
-                </p>
-              </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
+                Chatter Box
+              </h1>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Your AI assistant that learns from your documents
+              </p>
             </div>
             <div className="flex items-center gap-2">
               {currentMessages.length > 0 && (
@@ -738,7 +733,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
               {currentMessages.length === 0 && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Smiley size={32} className="text-primary" weight="fill" />
+                    <Chat size={32} className="text-primary" weight="fill" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
                   <p className="text-muted-foreground text-sm max-w-md mx-auto">
