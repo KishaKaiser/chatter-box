@@ -23,6 +23,7 @@ import {
   Upload
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ImageEditorProps {
   open: boolean
@@ -44,6 +45,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
   const [isGenerating, setIsGenerating] = useState(false)
   const [prompt, setPrompt] = useState("")
   const [enhancePrompt, setEnhancePrompt] = useState("")
+  const [isDraggingImage, setIsDraggingImage] = useState(false)
 
   useEffect(() => {
     if (open && imageUrl && mode === "edit") {
@@ -297,6 +299,63 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     }
   }
 
+  const loadImageFromFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please drop an image file")
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        setOriginalImage(img)
+        setBrightness(100)
+        setContrast(100)
+        setSaturation(100)
+        setBlur(0)
+        setRotation(0)
+        drawImage(img)
+        toast.success(`${file.name} loaded successfully`)
+      }
+      img.onerror = () => {
+        toast.error("Failed to load image")
+      }
+      if (event.target?.result) {
+        img.src = event.target.result as string
+      }
+    }
+    reader.onerror = () => {
+      toast.error("Failed to read file")
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingImage(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      loadImageFromFile(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingImage(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingImage(false)
+  }
+
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -356,7 +415,28 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
             <ScrollArea className="flex-1 mt-4">
               <TabsContent value="edit" className="space-y-6 mt-0">
                 <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg p-4 min-h-[400px]">
+                  <div 
+                    className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg p-4 min-h-[400px] relative"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                  >
+                    {isDraggingImage && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute inset-0 z-10 bg-accent/20 backdrop-blur-sm border-4 border-accent border-dashed rounded-lg flex items-center justify-center"
+                      >
+                        <div className="bg-card p-6 rounded-2xl shadow-2xl border-2 border-accent">
+                          <Upload size={48} className="text-accent mx-auto mb-3" weight="fill" />
+                          <p className="text-lg font-semibold text-center">Drop image here</p>
+                          <p className="text-sm text-muted-foreground text-center mt-1">
+                            Max 10MB
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
                     <canvas
                       ref={canvasRef}
                       className="max-w-full max-h-[500px] rounded-lg shadow-lg"
@@ -468,7 +548,28 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
 
               <TabsContent value="generate" className="space-y-6 mt-0">
                 <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg p-4 min-h-[400px]">
+                  <div 
+                    className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg p-4 min-h-[400px] relative"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                  >
+                    {isDraggingImage && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute inset-0 z-10 bg-accent/20 backdrop-blur-sm border-4 border-accent border-dashed rounded-lg flex items-center justify-center"
+                      >
+                        <div className="bg-card p-6 rounded-2xl shadow-2xl border-2 border-accent">
+                          <Upload size={48} className="text-accent mx-auto mb-3" weight="fill" />
+                          <p className="text-lg font-semibold text-center">Drop image here</p>
+                          <p className="text-sm text-muted-foreground text-center mt-1">
+                            Max 10MB
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
                     <canvas
                       ref={canvasRef}
                       className="max-w-full max-h-[500px] rounded-lg shadow-lg"
@@ -535,7 +636,28 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
 
               <TabsContent value="enhance" className="space-y-6 mt-0">
                 <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg p-4 min-h-[400px]">
+                  <div 
+                    className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg p-4 min-h-[400px] relative"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                  >
+                    {isDraggingImage && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute inset-0 z-10 bg-accent/20 backdrop-blur-sm border-4 border-accent border-dashed rounded-lg flex items-center justify-center"
+                      >
+                        <div className="bg-card p-6 rounded-2xl shadow-2xl border-2 border-accent">
+                          <Upload size={48} className="text-accent mx-auto mb-3" weight="fill" />
+                          <p className="text-lg font-semibold text-center">Drop image here</p>
+                          <p className="text-sm text-muted-foreground text-center mt-1">
+                            Max 10MB
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
                     <canvas
                       ref={canvasRef}
                       className="max-w-full max-h-[500px] rounded-lg shadow-lg"
