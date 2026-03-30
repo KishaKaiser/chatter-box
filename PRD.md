@@ -123,8 +123,15 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Enhancement Accuracy**: AI enhancement uses simulated adjustments, not true AI vision, set appropriate expectations
 - **Multiple Tabs Open**: Only one image can be edited at a time, switching tabs preserves current work
 - **Download Compatibility**: Canvas toBlob may not work in older browsers, provide alternative download method
+- **Story Generation Timeout**: Very long stories (10+ chapters) may take 30+ seconds to generate, show progress indicator and keep user informed
+- **Empty Story Fields**: Require at least title and description, show validation errors for missing required fields
+- **Story JSON Parsing**: Handle malformed JSON responses from AI gracefully, retry or show helpful error
+- **Chapter Regeneration**: Maintain story context when regenerating individual chapters, ensure consistency with previous chapters
+- **Long Story Content**: Stories with many chapters may be difficult to scroll through, consider pagination or chapter navigation
+- **Story Download Naming**: Sanitize story titles for valid filenames, handle special characters and length limits
 
-**Image Operations**
+## Image Operations
+
 **Image Editing**
 - Functionality: Adjust images with real-time filters including brightness, contrast, saturation, blur, and rotation
 - Purpose: Enables users to perfect images before sharing, with professional-grade editing controls in a simple interface
@@ -145,6 +152,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Trigger: Click "Images" button with existing image loaded, navigate to "Enhance" tab
 - Progression: Load image → Enhance tab → Describe desired enhancement (e.g., "make brighter and more vibrant") → Click "Enhance with AI" → AI adjusts filters automatically → Preview updated image → Download or save
 - Success criteria: Enhancement instructions produce appropriate filter adjustments, enhancements improve image quality, original can be restored with reset
+
+**Story Creation**
+- Functionality: Generate detailed multi-chapter stories with AI based on customizable parameters (genre, tone, length, characters, setting)
+- Purpose: Enables users to create complete fictional narratives without writing experience, perfect for creative exploration or content generation
+- Trigger: Click "Stories" button in header
+- Progression: Click Stories → Enter title and description → Select genre, tone, chapter count, and length → Add optional details (characters, setting, conflict) → Click "Generate Story" → AI creates full story with chapters → View, download, or send to chat → Regenerate individual chapters if desired
+- Success criteria: Stories are coherent and match specified parameters, chapters flow naturally, regeneration produces different but consistent content, download works in plain text format, stories can be previewed in chat
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -260,6 +274,9 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Brightness: `SunDim` (Phosphor)
   - Reset filters: `ArrowCounterClockwise` (Phosphor)
   - Save image: `FloppyDisk` (Phosphor, filled)
+  - Stories: `BookOpen` (Phosphor, filled)
+  - Story chapter: `Book` (Phosphor)
+  - Regenerate: `ArrowCounterClockwise` (Phosphor)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Image as ImageIcon } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Image as ImageIcon, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAc
 import { ProfileSettings } from "@/components/ProfileSettings"
 import { ConversationThreads, ConversationThread } from "@/components/ConversationThreads"
 import { ImageEditor } from "@/components/ImageEditor"
+import { StoryCreator } from "@/components/StoryCreator"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -43,6 +44,7 @@ function App() {
   const [imageEditorOpen, setImageEditorOpen] = useState(false)
   const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("create")
   const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false)
 
   useEffect(() => {
     const threadList = threads || []
@@ -418,6 +420,23 @@ def example():
     setPendingAttachments((current) => [...current, imageAttachment])
   }
 
+  const handleStorySaveToChat = (storyText: string) => {
+    if (!storyText.trim()) return
+
+    const userMessage: Message = {
+      id: `${Date.now()}-user`,
+      role: "user",
+      content: storyText,
+      timestamp: Date.now(),
+    }
+
+    setMessages((current) => {
+      const updated = [...(current || []), userMessage]
+      updateThreadMetadata(updated.length)
+      return updated
+    })
+  }
+
   const handleImageClick = (imageUrl: string) => {
     setImageToEdit(imageUrl)
     setImageEditorMode("edit")
@@ -569,6 +588,16 @@ def example():
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setStoryCreatorOpen(true)}
+                variant="outline"
+                className="border-primary/50 text-primary hover:bg-primary/10 active:scale-95 transition-transform gap-2"
+                size="sm"
+                title="Create stories"
+              >
+                <BookOpen size={18} weight="fill" />
+                <span className="hidden sm:inline">Stories</span>
+              </Button>
               <Button
                 onClick={() => {
                   setImageEditorMode("create")
@@ -795,6 +824,12 @@ def example():
         imageUrl={imageToEdit}
         mode={imageEditorMode}
         onSaveToChat={handleImageSaveToChat}
+      />
+
+      <StoryCreator
+        open={storyCreatorOpen}
+        onClose={() => setStoryCreatorOpen(false)}
+        onSaveToChat={handleStorySaveToChat}
       />
     </div>
   )
