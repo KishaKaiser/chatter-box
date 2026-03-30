@@ -228,6 +228,40 @@ def example():
     inputRef.current?.focus()
   }
 
+  const handleRegenerateResponse = async (messageId: string) => {
+    const msgList = currentMessages || []
+    const messageIndex = msgList.findIndex(m => m.id === messageId)
+    
+    if (messageIndex === -1 || msgList[messageIndex].role !== "bot") return
+    
+    const previousUserMessage = msgList
+      .slice(0, messageIndex)
+      .reverse()
+      .find(m => m.role === "user")
+    
+    if (!previousUserMessage) return
+
+    setIsTyping(true)
+    
+    const newBotResponse = await generateBotResponse(previousUserMessage.content, previousUserMessage.attachments)
+    
+    setMessages((current) => {
+      const updated = [...(current || [])]
+      const targetIndex = updated.findIndex(m => m.id === messageId)
+      if (targetIndex !== -1) {
+        updated[targetIndex] = {
+          ...updated[targetIndex],
+          content: newBotResponse,
+          timestamp: Date.now(),
+        }
+      }
+      return updated
+    })
+    
+    setIsTyping(false)
+    toast.success("Response regenerated")
+  }
+
   const handleThreadSelect = (threadId: string) => {
     setCurrentThreadId(threadId)
   }
@@ -617,7 +651,11 @@ def example():
               )}
               
               {currentMessages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+                <ChatMessage 
+                  key={message.id} 
+                  message={message}
+                  onRegenerate={handleRegenerateResponse}
+                />
               ))}
               
               {isTyping && <TypingIndicator />}

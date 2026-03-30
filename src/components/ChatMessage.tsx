@@ -1,10 +1,19 @@
-import { Robot, User, SpeakerHigh, SpeakerSlash, FileImage, FilePdf, FileText, File as FileIcon } from "@phosphor-icons/react"
+import { Robot, User, SpeakerHigh, SpeakerSlash, FileImage, FilePdf, FileText, File as FileIcon, ArrowClockwise, Copy } from "@phosphor-icons/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
 import { CodeBlock } from "@/components/CodeBlock"
+import { toast } from "sonner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { DotsThree } from "@phosphor-icons/react"
 
 export type MessageAttachment = {
   id: string
@@ -24,6 +33,7 @@ export type Message = {
 
 type ChatMessageProps = {
   message: Message
+  onRegenerate?: (messageId: string) => void
 }
 
 type ContentPart = {
@@ -32,10 +42,26 @@ type ContentPart = {
   language?: string
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, onRegenerate }: ChatMessageProps) {
   const isBot = message.role === "bot"
   const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
   const isThisMessageSpeaking = isSpeaking && currentText === message.content
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      toast.success("Response copied to clipboard")
+    } catch (error) {
+      toast.error("Failed to copy response")
+    }
+  }
+
+  const handleRegenerate = () => {
+    if (onRegenerate) {
+      onRegenerate(message.id)
+      toast.info("Regenerating response...")
+    }
+  }
 
   const parseMessageContent = (content: string): ContentPart[] => {
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
@@ -133,20 +159,51 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 )
               })}
             </div>
-            {isBot && isSupported && (
-              <Button
-                onClick={() => toggle(message.content)}
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0 hover:bg-primary/10 active:scale-95 transition-transform"
-                title={isThisMessageSpeaking ? "Stop speaking" : "Read aloud"}
-              >
-                {isThisMessageSpeaking ? (
-                  <SpeakerSlash size={16} weight="fill" className="text-accent animate-pulse" />
-                ) : (
-                  <SpeakerHigh size={16} weight="fill" className="text-muted-foreground" />
+            {isBot && (
+              <div className="flex items-center gap-1 shrink-0">
+                {isSupported && (
+                  <Button
+                    onClick={() => toggle(message.content)}
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-primary/10 active:scale-95 transition-transform"
+                    title={isThisMessageSpeaking ? "Stop speaking" : "Read aloud"}
+                  >
+                    {isThisMessageSpeaking ? (
+                      <SpeakerSlash size={16} weight="fill" className="text-accent animate-pulse" />
+                    ) : (
+                      <SpeakerHigh size={16} weight="fill" className="text-muted-foreground" />
+                    )}
+                  </Button>
                 )}
-              </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 hover:bg-primary/10 active:scale-95 transition-transform"
+                      title="More actions"
+                    >
+                      <DotsThree size={18} weight="bold" className="text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={handleCopy} className="cursor-pointer gap-2">
+                      <Copy size={16} weight="bold" />
+                      <span>Copy</span>
+                    </DropdownMenuItem>
+                    {onRegenerate && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleRegenerate} className="cursor-pointer gap-2">
+                          <ArrowClockwise size={16} weight="bold" />
+                          <span>Regenerate</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
           {message.attachments && message.attachments.length > 0 && (
