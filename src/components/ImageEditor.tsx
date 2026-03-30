@@ -127,6 +127,27 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
       saturation: 0,
       grayscale: 100,
     },
+    noir: {
+      name: "Noir",
+      brightness: 85,
+      contrast: 160,
+      saturation: 0,
+      grayscale: 100,
+    },
+    cinematic: {
+      name: "Cinematic",
+      brightness: 95,
+      contrast: 125,
+      saturation: 85,
+      hueRotate: 15,
+    },
+    neon: {
+      name: "Neon",
+      brightness: 120,
+      contrast: 135,
+      saturation: 180,
+      hueRotate: 270,
+    },
   }
 
   useEffect(() => {
@@ -1017,6 +1038,33 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                             className={activeFilter === "blackAndWhite" ? "bg-accent text-accent-foreground" : ""}
                           >
                             B&W High
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("noir")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "noir" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "noir" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Noir
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("cinematic")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "cinematic" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "cinematic" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Cinematic
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("neon")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "neon" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "neon" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Neon
                           </Button>
                         </div>
                         {activeFilter && (
