@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -502,7 +502,7 @@ def example():
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-primary to-accent rounded-xl p-2">
-                <Sparkle size={28} weight="fill" className="text-primary-foreground" />
+                <Smiley size={28} weight="fill" className="text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
@@ -605,7 +605,7 @@ def example():
               {currentMessages.length === 0 && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Sparkle size={32} className="text-primary" weight="fill" />
+                    <Smiley size={32} className="text-primary" weight="fill" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
                   <p className="text-muted-foreground text-sm max-w-md mx-auto">
