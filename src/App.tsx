@@ -7,14 +7,13 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChatMessage, Message } from "@/components/ChatMessage"
 import { TypingIndicator } from "@/components/TypingIndicator"
-import { KnowledgeBase, KnowledgeFile } from "@/components/KnowledgeBase"
+import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { ProfileSettings } from "@/components/ProfileSettings"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useVoiceInput } from "@/hooks/use-voice-input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,14 +138,6 @@ Provide a helpful, conversational response. If the question relates to the uploa
     }
   }
 
-  const handleAddFile = (file: KnowledgeFile) => {
-    setKnowledgeFiles((current) => [...(current || []), file])
-  }
-
-  const handleRemoveFile = (id: string) => {
-    setKnowledgeFiles((current) => (current || []).filter((f) => f.id !== id))
-  }
-
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp)
     return date.toLocaleString('en-US', {
@@ -235,22 +226,22 @@ Provide a helpful, conversational response. If the question relates to the uploa
     )
   }
 
+  const handleAddFile = (file: KnowledgeFile) => {
+    setKnowledgeFiles((current) => [...(current || []), file])
+  }
+
+  const handleRemoveFile = (id: string) => {
+    setKnowledgeFiles((current) => (current || []).filter((f) => f.id !== id))
+  }
+
   const currentMessages = messages || []
   const currentFiles = knowledgeFiles || []
-
-  const KnowledgeBaseComponent = (
-    <KnowledgeBase
-      files={currentFiles}
-      onAddFile={handleAddFile}
-      onRemoveFile={handleRemoveFile}
-    />
-  )
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <Toaster position="top-center" />
       
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -293,6 +284,9 @@ Provide a helpful, conversational response. If the question relates to the uploa
                 <ProfileSettings
                   currentUser={currentUser}
                   onUpdateProfile={handleUpdateProfile}
+                  knowledgeFiles={currentFiles}
+                  onAddFile={handleAddFile}
+                  onRemoveFile={handleRemoveFile}
                 />
               )}
               <UserAccount
@@ -304,90 +298,69 @@ Provide a helpful, conversational response. If the question relates to the uploa
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card className="flex flex-col h-[calc(100vh-200px)] border-2">
-              <ScrollArea className="flex-1 p-6" ref={scrollRef}>
-                <div className="space-y-4">
-                  {currentMessages.length === 0 && (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Sparkle size={32} className="text-primary" weight="fill" />
-                      </div>
-                      <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
-                      <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                        {currentFiles.length === 0
-                          ? "Start by uploading some documents to teach me, then ask me anything!"
-                          : "I've learned from your documents. Ask me anything!"}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {currentMessages.map((message) => (
-                    <ChatMessage key={message.id} message={message} />
-                  ))}
-                  
-                  {isTyping && <TypingIndicator />}
+        <Card className="flex flex-col h-[calc(100vh-200px)] border-2">
+          <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+            <div className="space-y-4">
+              {currentMessages.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Sparkle size={32} className="text-primary" weight="fill" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                    {currentFiles.length === 0
+                      ? "Start by uploading some documents in settings, then ask me anything!"
+                      : "I've learned from your documents. Ask me anything!"}
+                  </p>
                 </div>
-              </ScrollArea>
-
-              <div className="p-4 border-t border-border">
-                <div className="flex gap-2">
-                  <Input
-                    ref={inputRef}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder={isListening ? "Listening..." : "Type your message..."}
-                    className="flex-1 focus-visible:ring-accent text-[15px]"
-                    disabled={isTyping}
-                  />
-                  <Button
-                    onClick={toggleVoiceInput}
-                    disabled={isTyping}
-                    variant={isListening ? "default" : "outline"}
-                    className={isListening 
-                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-transform animate-pulse" 
-                      : "border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"}
-                    size="icon"
-                    title={isListening ? "Stop recording" : "Start voice input"}
-                  >
-                    {isListening ? (
-                      <MicrophoneSlash size={20} weight="fill" />
-                    ) : (
-                      <Microphone size={20} weight="fill" />
-                    )}
-                  </Button>
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isTyping}
-                    className="bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 transition-transform"
-                    size="icon"
-                  >
-                    <PaperPlaneRight size={20} weight="fill" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {isMobile ? (
-            <div className="fixed bottom-4 right-4 z-50">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button size="lg" className="rounded-full shadow-lg">
-                    Knowledge Base ({currentFiles.length})
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[80vh]">
-                  <div className="py-4">{KnowledgeBaseComponent}</div>
-                </SheetContent>
-              </Sheet>
+              )}
+              
+              {currentMessages.map((message) => (
+                <ChatMessage key={message.id} message={message} />
+              ))}
+              
+              {isTyping && <TypingIndicator />}
             </div>
-          ) : (
-            <div className="lg:col-span-1">{KnowledgeBaseComponent}</div>
-          )}
-        </div>
+          </ScrollArea>
+
+          <div className="p-4 border-t border-border">
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={isListening ? "Listening..." : "Type your message..."}
+                className="flex-1 focus-visible:ring-accent text-[15px]"
+                disabled={isTyping}
+              />
+              <Button
+                onClick={toggleVoiceInput}
+                disabled={isTyping}
+                variant={isListening ? "default" : "outline"}
+                className={isListening 
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-transform animate-pulse" 
+                  : "border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"}
+                size="icon"
+                title={isListening ? "Stop recording" : "Start voice input"}
+              >
+                {isListening ? (
+                  <MicrophoneSlash size={20} weight="fill" />
+                ) : (
+                  <Microphone size={20} weight="fill" />
+                )}
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isTyping}
+                className="bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 transition-transform"
+                size="icon"
+              >
+                <PaperPlaneRight size={20} weight="fill" />
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   )
