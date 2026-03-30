@@ -39,6 +39,9 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
     { value: "abstract", label: "Abstract" },
     { value: "impressionist", label: "Impressionist" },
     { value: "comic-book", label: "Comic Book" },
+    { value: "pop-art", label: "Pop Art" },
+    { value: "graffiti", label: "Graffiti" },
+    { value: "minimalist", label: "Minimalist" },
   ]
 
   const aspectRatios = [
@@ -111,6 +114,9 @@ Visual Description:`
         "abstract": ["#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff"],
         "impressionist": ["#ffd6a5", "#ffadad", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff"],
         "comic-book": ["#ff0000", "#0000ff", "#ffff00", "#000000", "#ffffff"],
+        "pop-art": ["#ff1493", "#00ffff", "#ffff00", "#ff4500", "#00ff00"],
+        "graffiti": ["#ff0066", "#00ff99", "#ffcc00", "#9933ff", "#ff6600"],
+        "minimalist": ["#ffffff", "#f5f5f5", "#e0e0e0", "#333333", "#000000"],
       }
 
       const colors = colorSchemes[style] || colorSchemes["realistic"]
@@ -348,6 +354,188 @@ Visual Description:`
         lightGradient.addColorStop(1, 'rgba(255, 215, 0, 0)')
         ctx.fillStyle = lightGradient
         ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+      } else if (style === "pop-art") {
+        ctx.fillStyle = colors[4]
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        const gridCols = 4
+        const gridRows = 3
+        const cellWidth = dimensions.width / gridCols
+        const cellHeight = dimensions.height / gridRows
+        
+        for (let row = 0; row < gridRows; row++) {
+          for (let col = 0; col < gridCols; col++) {
+            const x = col * cellWidth
+            const y = row * cellHeight
+            const colorIndex = (row * gridCols + col) % colors.length
+            const bg = ctx.createRadialGradient(
+              x + cellWidth / 2, y + cellHeight / 2, 0,
+              x + cellWidth / 2, y + cellHeight / 2, cellWidth * 0.7
+            )
+            bg.addColorStop(0, colors[colorIndex])
+            bg.addColorStop(1, colors[(colorIndex + 2) % colors.length])
+            ctx.fillStyle = bg
+            ctx.fillRect(x, y, cellWidth, cellHeight)
+            
+            ctx.strokeStyle = '#000000'
+            ctx.lineWidth = 4
+            ctx.strokeRect(x, y, cellWidth, cellHeight)
+            
+            const dotSpacing = 12
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
+            for (let dx = 0; dx < cellWidth; dx += dotSpacing) {
+              for (let dy = 0; dy < cellHeight; dy += dotSpacing) {
+                ctx.beginPath()
+                ctx.arc(x + dx, y + dy, 2, 0, Math.PI * 2)
+                ctx.fill()
+              }
+            }
+          }
+        }
+        
+        ctx.strokeStyle = '#000000'
+        ctx.lineWidth = 8
+        ctx.strokeRect(0, 0, dimensions.width, dimensions.height)
+      } else if (style === "graffiti") {
+        const gradient = ctx.createLinearGradient(0, 0, dimensions.width, dimensions.height)
+        gradient.addColorStop(0, '#1a1a1a')
+        gradient.addColorStop(1, '#2d2d2d')
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.globalAlpha = 0.1
+        for (let i = 0; i < 20; i++) {
+          ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]
+          ctx.fillRect(
+            Math.random() * dimensions.width,
+            Math.random() * dimensions.height,
+            Math.random() * 200 + 50,
+            Math.random() * 200 + 50
+          )
+        }
+        ctx.globalAlpha = 1.0
+        
+        for (let i = 0; i < 15; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 150 + 80
+          const colorIndex = Math.floor(Math.random() * colors.length)
+          
+          const spray = ctx.createRadialGradient(x, y, 0, x, y, size)
+          spray.addColorStop(0, colors[colorIndex])
+          spray.addColorStop(0.5, colors[colorIndex] + '88')
+          spray.addColorStop(1, colors[colorIndex] + '00')
+          ctx.fillStyle = spray
+          ctx.fillRect(x - size, y - size, size * 2, size * 2)
+          
+          ctx.globalAlpha = 0.6
+          for (let j = 0; j < 100; j++) {
+            const angle = Math.random() * Math.PI * 2
+            const distance = Math.random() * size
+            const px = x + Math.cos(angle) * distance
+            const py = y + Math.sin(angle) * distance
+            ctx.fillStyle = colors[colorIndex]
+            ctx.fillRect(px, py, 2, 2)
+          }
+          ctx.globalAlpha = 1.0
+        }
+        
+        ctx.strokeStyle = colors[0]
+        ctx.lineWidth = 6
+        ctx.globalAlpha = 0.8
+        for (let i = 0; i < 20; i++) {
+          ctx.beginPath()
+          const startX = Math.random() * dimensions.width
+          const startY = Math.random() * dimensions.height
+          ctx.moveTo(startX, startY)
+          
+          const points = Math.floor(Math.random() * 4) + 3
+          for (let j = 0; j < points; j++) {
+            ctx.lineTo(
+              startX + (Math.random() - 0.5) * 200,
+              startY + (Math.random() - 0.5) * 200
+            )
+          }
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        ctx.shadowBlur = 20
+        ctx.shadowColor = colors[1]
+        for (let i = 0; i < 8; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 60 + 30
+          ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.shadowBlur = 0
+      } else if (style === "minimalist") {
+        ctx.fillStyle = colors[0]
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.strokeStyle = colors[3]
+        ctx.lineWidth = 1
+        ctx.globalAlpha = 0.15
+        const gridSpacing = 40
+        for (let x = 0; x < dimensions.width; x += gridSpacing) {
+          ctx.beginPath()
+          ctx.moveTo(x, 0)
+          ctx.lineTo(x, dimensions.height)
+          ctx.stroke()
+        }
+        for (let y = 0; y < dimensions.height; y += gridSpacing) {
+          ctx.beginPath()
+          ctx.moveTo(0, y)
+          ctx.lineTo(dimensions.width, y)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const shapeCount = 3
+        for (let i = 0; i < shapeCount; i++) {
+          const x = (dimensions.width / (shapeCount + 1)) * (i + 1)
+          const y = dimensions.height / 2
+          const size = dimensions.width / (shapeCount + 2)
+          
+          ctx.strokeStyle = colors[3]
+          ctx.lineWidth = 3
+          ctx.fillStyle = i % 2 === 0 ? colors[3] : 'transparent'
+          
+          if (i % 3 === 0) {
+            ctx.beginPath()
+            ctx.arc(x, y, size / 2, 0, Math.PI * 2)
+            if (i % 2 === 0) ctx.fill()
+            ctx.stroke()
+          } else if (i % 3 === 1) {
+            const half = size / 2
+            if (i % 2 === 0) ctx.fillRect(x - half, y - half, size, size)
+            ctx.strokeRect(x - half, y - half, size, size)
+          } else {
+            ctx.beginPath()
+            ctx.moveTo(x, y - size / 2)
+            ctx.lineTo(x + size / 2, y + size / 2)
+            ctx.lineTo(x - size / 2, y + size / 2)
+            ctx.closePath()
+            if (i % 2 === 0) ctx.fill()
+            ctx.stroke()
+          }
+        }
+        
+        ctx.strokeStyle = colors[4]
+        ctx.lineWidth = 2
+        ctx.setLineDash([10, 10])
+        ctx.beginPath()
+        ctx.moveTo(dimensions.width * 0.1, dimensions.height * 0.3)
+        ctx.lineTo(dimensions.width * 0.9, dimensions.height * 0.3)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(dimensions.width * 0.1, dimensions.height * 0.7)
+        ctx.lineTo(dimensions.width * 0.9, dimensions.height * 0.7)
+        ctx.stroke()
+        ctx.setLineDash([])
       } else {
         colors.forEach((color, i) => {
           gradient.addColorStop(i / (colors.length - 1), color)
