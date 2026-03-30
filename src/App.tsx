@@ -665,7 +665,6 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                 currentUser={currentUser || null}
                 onLogin={handleLogin}
                 onLogout={handleLogout}
-                onOpenSettings={() => setSettingsOpen(true)}
               />
               {currentUser && (
                 <ProfileSettings
