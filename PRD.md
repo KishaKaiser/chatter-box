@@ -76,11 +76,11 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Success criteria: Code is properly highlighted with accurate language detection, supports 20+ languages (JS, TS, Python, Java, C++, etc.), includes copy-to-clipboard functionality
 
 **Conversation Threads**
-- Functionality: Create, switch between, rename, and delete separate chat sessions (threads) to organize different topics
-- Purpose: Enables users to maintain multiple organized conversations for different contexts or subjects
-- Trigger: Click "Conversations" button to manage threads, create new threads with custom names
-- Progression: Click conversations → View thread list sorted by recent activity → Click thread to switch → New thread button creates fresh conversation → Rename or delete threads with hover actions
-- Success criteria: Each thread maintains its own message history, threads persist per user, can switch seamlessly between threads, thread metadata (message count, last updated) displays accurately, cannot delete the last remaining thread
+- Functionality: Create, switch between, rename, delete, and archive separate chat sessions (threads) to organize different topics
+- Purpose: Enables users to maintain multiple organized conversations for different contexts or subjects, with the ability to hide old conversations without deleting them
+- Trigger: Click "Conversations" button to manage threads, create new threads with custom names, archive icon to archive/unarchive threads
+- Progression: Click conversations → View thread list sorted by recent activity → Toggle between Active and Archived tabs → Click thread to switch → New thread button creates fresh conversation → Rename or delete threads with hover actions → Archive button hides threads from active list → Archived tab shows all archived threads that can be restored
+- Success criteria: Each thread maintains its own message history, threads persist per user, can switch seamlessly between threads, thread metadata (message count, last updated) displays accurately, cannot delete the last remaining active thread, archived threads hidden from main view but accessible via archived tab, can restore archived threads to active, archiving current thread auto-switches to another active thread
 
 ## Edge Case Handling
 - **Empty Chat State**: Display welcoming message with upload prompt when no files have been added yet
@@ -109,11 +109,12 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Code Block Rendering**: Handle markdown code blocks (```language) with proper syntax highlighting even in long messages
 - **Unsupported Languages**: Display code with basic formatting if language is not recognized by syntax highlighter
 - **Copy Code Failures**: Show error toast if clipboard access is denied or unavailable
-- **Thread Management**: Prevent deleting the last remaining thread, show confirmation dialog before deletion
+- **Thread Management**: Prevent deleting the last remaining active thread (archived threads can be deleted), show confirmation dialog before deletion
 - **Thread Switching**: Smoothly transition between threads, loading correct message history for each
 - **Empty Threads**: Show welcoming empty state when switching to a new thread with no messages
 - **Thread Metadata Accuracy**: Keep message counts and last updated timestamps accurate as messages are added
 - **Long Thread Lists**: Scroll thread list smoothly when many threads exist, sort by most recent activity
+- **Thread Archiving**: Archived threads hidden from active view but fully accessible via archived tab, archiving current thread switches to first available active thread, badge counters show active vs archived counts separately
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -178,8 +179,10 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Code block header with language label and copy button (appears on hover)
   - Syntax-highlighted code display with custom purple-cyan color scheme matching app theme
   - Thread list items showing title, message count, and last activity time
-  - Thread item hover actions for rename and delete (visible on hover)
+  - Thread item hover actions for rename, archive, and delete (visible on hover)
   - Thread creation input with instant create button
+  - Tabbed interface for Active and Archived threads with count badges
+  - Archive button appears on all threads with distinct visual state for archived items
 
 - **States**:
   - Buttons: Default (cyan), hover (brighter cyan + glow), active (scale down), disabled (muted)
@@ -209,6 +212,7 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - New thread: `Plus` (Phosphor, bold)
   - Edit thread: `PencilSimple` (Phosphor, bold)
   - Delete thread: `Trash` (Phosphor, bold)
+  - Archive/Unarchive thread: `Archive` (Phosphor, bold)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Chat, Trash, PencilSimple, Check, X } from "@phosphor-icons/react"
+import { Plus, Chat, Trash, PencilSimple, Check, X, Archive } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +30,7 @@ export interface ConversationThread {
   createdAt: number
   lastUpdatedAt: number
   messageCount: number
+  archived?: boolean
 }
 
 interface ConversationThreadsProps {
@@ -38,6 +40,8 @@ interface ConversationThreadsProps {
   onThreadCreate: (title: string) => void
   onThreadDelete: (threadId: string) => void
   onThreadRename: (threadId: string, newTitle: string) => void
+  onThreadArchive: (threadId: string) => void
+  onThreadUnarchive: (threadId: string) => void
 }
 
 export function ConversationThreads({
@@ -47,12 +51,15 @@ export function ConversationThreads({
   onThreadCreate,
   onThreadDelete,
   onThreadRename,
+  onThreadArchive,
+  onThreadUnarchive,
 }: ConversationThreadsProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [newThreadTitle, setNewThreadTitle] = useState("")
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState("")
   const [deleteThreadId, setDeleteThreadId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active")
 
   const handleCreateThread = () => {
     const title = newThreadTitle.trim() || `Conversation ${threads.length + 1}`
@@ -101,7 +108,134 @@ export function ConversationThreads({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
-  const sortedThreads = [...threads].sort((a, b) => b.lastUpdatedAt - a.lastUpdatedAt)
+  const activeThreads = threads.filter(t => !t.archived).sort((a, b) => b.lastUpdatedAt - a.lastUpdatedAt)
+  const archivedThreads = threads.filter(t => t.archived).sort((a, b) => b.lastUpdatedAt - a.lastUpdatedAt)
+
+  const renderThreadList = (threadList: ConversationThread[]) => (
+    <div className="space-y-2 pr-4">
+      <AnimatePresence mode="popLayout">
+        {threadList.map((thread) => (
+          <motion.div
+            key={thread.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            layout
+            className={cn(
+              "group relative p-3 rounded-lg border-2 transition-all cursor-pointer",
+              currentThreadId === thread.id
+                ? "bg-accent/10 border-accent"
+                : "bg-card border-border hover:border-accent/50 hover:bg-accent/5"
+            )}
+            onClick={() => {
+              if (editingThreadId !== thread.id) {
+                onThreadSelect(thread.id)
+                setIsOpen(false)
+              }
+            }}
+          >
+            {editingThreadId === thread.id ? (
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <Input
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSaveEdit()
+                    } else if (e.key === "Escape") {
+                      handleCancelEdit()
+                    }
+                  }}
+                  className="h-8 text-sm"
+                  autoFocus
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-accent hover:text-accent hover:bg-accent/10"
+                  onClick={handleSaveEdit}
+                >
+                  <Check size={16} weight="bold" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={handleCancelEdit}
+                >
+                  <X size={16} weight="bold" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm truncate">
+                      {thread.title}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <span>{thread.messageCount} messages</span>
+                      <span>•</span>
+                      <span>{formatDate(thread.lastUpdatedAt)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!thread.archived && currentThreadId === thread.id && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleStartEdit(thread)
+                        }}
+                      >
+                        <PencilSimple size={14} weight="bold" />
+                      </Button>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (thread.archived) {
+                          onThreadUnarchive(thread.id)
+                        } else {
+                          onThreadArchive(thread.id)
+                        }
+                      }}
+                      title={thread.archived ? "Unarchive" : "Archive"}
+                    >
+                      <Archive size={14} weight="bold" />
+                    </Button>
+                    {(thread.archived || (activeThreads.length > 1 && !thread.archived)) && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteThreadId(thread.id)
+                        }}
+                      >
+                        <Trash size={14} weight="bold" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      {threadList.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground text-sm">
+          {activeTab === "archived" ? "No archived conversations" : "No conversations yet"}
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <>
@@ -148,110 +282,36 @@ export function ConversationThreads({
               </Button>
             </div>
 
-            <ScrollArea className="h-[calc(100vh-220px)]">
-              <div className="space-y-2 pr-4">
-                <AnimatePresence mode="popLayout">
-                  {sortedThreads.map((thread) => (
-                    <motion.div
-                      key={thread.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      layout
-                      className={cn(
-                        "group relative p-3 rounded-lg border-2 transition-all cursor-pointer",
-                        currentThreadId === thread.id
-                          ? "bg-accent/10 border-accent"
-                          : "bg-card border-border hover:border-accent/50 hover:bg-accent/5"
-                      )}
-                      onClick={() => {
-                        if (editingThreadId !== thread.id) {
-                          onThreadSelect(thread.id)
-                          setIsOpen(false)
-                        }
-                      }}
-                    >
-                      {editingThreadId === thread.id ? (
-                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <Input
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleSaveEdit()
-                              } else if (e.key === "Escape") {
-                                handleCancelEdit()
-                              }
-                            }}
-                            className="h-8 text-sm"
-                            autoFocus
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-accent hover:text-accent hover:bg-accent/10"
-                            onClick={handleSaveEdit}
-                          >
-                            <Check size={16} weight="bold" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            onClick={handleCancelEdit}
-                          >
-                            <X size={16} weight="bold" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm truncate">
-                                {thread.title}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                <span>{thread.messageCount} messages</span>
-                                <span>•</span>
-                                <span>{formatDate(thread.lastUpdatedAt)}</span>
-                              </div>
-                            </div>
-                            {currentThreadId === thread.id && (
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-7 w-7 text-muted-foreground hover:text-accent hover:bg-accent/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleStartEdit(thread)
-                                  }}
-                                >
-                                  <PencilSimple size={14} weight="bold" />
-                                </Button>
-                                {threads.length > 1 && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setDeleteThreadId(thread.id)
-                                    }}
-                                  >
-                                    <Trash size={14} weight="bold" />
-                                  </Button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </ScrollArea>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "archived")} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="active" className="gap-2">
+                  <Chat size={16} weight="bold" />
+                  <span>Active</span>
+                  {activeThreads.length > 0 && (
+                    <span className="ml-1 text-xs">({activeThreads.length})</span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="archived" className="gap-2">
+                  <Archive size={16} weight="bold" />
+                  <span>Archived</span>
+                  {archivedThreads.length > 0 && (
+                    <span className="ml-1 text-xs">({archivedThreads.length})</span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="active" className="mt-4">
+                <ScrollArea className="h-[calc(100vh-340px)]">
+                  {renderThreadList(activeThreads)}
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="archived" className="mt-4">
+                <ScrollArea className="h-[calc(100vh-340px)]">
+                  {renderThreadList(archivedThreads)}
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
           </div>
         </SheetContent>
       </Sheet>

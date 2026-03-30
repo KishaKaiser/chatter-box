@@ -58,7 +58,8 @@ function App() {
   }, [threads, currentThreadId, setThreads, setCurrentThreadId])
 
   const threadList = threads || []
-  const activeThreadId = currentThreadId || threadList[0]?.id || ""
+  const activeThreads = threadList.filter(t => !t.archived)
+  const activeThreadId = currentThreadId || activeThreads[0]?.id || ""
   const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
   const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
   
@@ -234,6 +235,38 @@ def example():
       )
     )
     toast.success("Thread renamed")
+  }
+
+  const handleThreadArchive = (threadId: string) => {
+    const thread = threadList.find(t => t.id === threadId)
+    if (!thread) return
+
+    setThreads((current) =>
+      (current || []).map((t) =>
+        t.id === threadId ? { ...t, archived: true } : t
+      )
+    )
+
+    if (threadId === activeThreadId) {
+      const remainingActive = activeThreads.filter(t => t.id !== threadId)
+      if (remainingActive.length > 0) {
+        setCurrentThreadId(remainingActive[0].id)
+      }
+    }
+
+    toast.success(`"${thread.title}" archived`)
+  }
+
+  const handleThreadUnarchive = (threadId: string) => {
+    const thread = threadList.find(t => t.id === threadId)
+    if (!thread) return
+
+    setThreads((current) =>
+      (current || []).map((t) =>
+        t.id === threadId ? { ...t, archived: false } : t
+      )
+    )
+    toast.success(`"${thread.title}" restored`)
   }
 
   const handleFileSelect = async (selectedFiles: FileList | null) => {
@@ -435,6 +468,8 @@ def example():
                 onThreadCreate={handleThreadCreate}
                 onThreadDelete={handleThreadDelete}
                 onThreadRename={handleThreadRename}
+                onThreadArchive={handleThreadArchive}
+                onThreadUnarchive={handleThreadUnarchive}
               />
               {currentMessages.length > 0 && (
                 <DropdownMenu>
