@@ -104,7 +104,20 @@ ${contextPart}${attachmentContext}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. If the question relates to the uploaded documents or attached files, reference them specifically. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.`
+Provide a helpful, conversational response. If the question relates to the uploaded documents or attached files, reference them specifically. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
+
+When including code snippets in your response, always use markdown code blocks with the language specified for proper syntax highlighting. For example:
+\`\`\`javascript
+const example = "code here";
+\`\`\`
+
+or
+
+\`\`\`python
+def example():
+    return "code here"
+\`\`\`
+`
 
     try {
       const response = await window.spark.llm(promptText, "gpt-4o-mini")

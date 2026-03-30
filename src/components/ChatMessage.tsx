@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
+import { CodeBlock } from "@/components/CodeBlock"
 
 export type MessageAttachment = {
   id: string
@@ -25,10 +26,49 @@ type ChatMessageProps = {
   message: Message
 }
 
+type ContentPart = {
+  type: "text" | "code"
+  content: string
+  language?: string
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isBot = message.role === "bot"
   const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
   const isThisMessageSpeaking = isSpeaking && currentText === message.content
+
+  const parseMessageContent = (content: string): ContentPart[] => {
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
+    const parts: ContentPart[] = []
+    let lastIndex = 0
+    let match
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({
+          type: "text",
+          content: content.slice(lastIndex, match.index)
+        })
+      }
+      
+      parts.push({
+        type: "code",
+        content: match[2].trim(),
+        language: match[1] || undefined
+      })
+      
+      lastIndex = match.index + match[0].length
+    }
+
+    if (lastIndex < content.length) {
+      parts.push({
+        type: "text",
+        content: content.slice(lastIndex)
+      })
+    }
+
+    return parts.length > 0 ? parts : [{ type: "text", content }]
+  }
 
   const getFileIcon = (type: string, name: string) => {
     if (type.includes("image")) return <FileImage size={16} weight="fill" />
@@ -50,6 +90,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
     }
     return "FILE"
   }
+
+  const contentParts = parseMessageContent(message.content)
   
   return (
     <motion.div
@@ -66,16 +108,31 @@ export function ChatMessage({ message }: ChatMessageProps) {
       
       <div className={`flex flex-col gap-2 max-w-[75%] ${isBot ? "" : "items-end"}`}>
         <div
-          className={`px-4 py-3 rounded-2xl ${
+          className={`rounded-2xl ${
             isBot
               ? "bg-card text-card-foreground rounded-tl-sm"
               : "bg-accent text-accent-foreground rounded-tr-sm"
-          }`}
+          } ${contentParts.some(p => p.type === "code") ? "p-0" : "px-4 py-3"}`}
         >
-          <div className="flex items-start gap-2">
-            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words flex-1">
-              {message.content}
-            </p>
+          <div className={`flex items-start gap-2 ${contentParts.some(p => p.type === "code") ? "px-4 py-3" : ""}`}>
+            <div className="flex-1 overflow-hidden">
+              {contentParts.map((part, index) => {
+                if (part.type === "code") {
+                  return (
+                    <CodeBlock
+                      key={index}
+                      code={part.content}
+                      language={part.language}
+                    />
+                  )
+                }
+                return (
+                  <p key={index} className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                    {part.content}
+                  </p>
+                )
+              })}
+            </div>
             {isBot && isSupported && (
               <Button
                 onClick={() => toggle(message.content)}

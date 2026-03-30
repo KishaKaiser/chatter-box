@@ -68,6 +68,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Progression: Click login → Choose signup or login → Enter credentials → Authenticate → Account created/logged in → User-specific data loads
 - Success criteria: Users can create accounts, login/logout, and their messages and knowledge files are isolated per user
 
+**Code Syntax Highlighting**
+- Functionality: Automatically detects and highlights code blocks in chat messages with language-specific syntax coloring
+- Purpose: Makes code snippets easy to read and understand, providing a professional developer-friendly experience
+- Trigger: Bot responds with code blocks using markdown syntax (```language code```)
+- Progression: Message contains code → Parser detects code blocks → Prism applies syntax highlighting → Code displays with color-coded tokens → Copy button appears on hover
+- Success criteria: Code is properly highlighted with accurate language detection, supports 20+ languages (JS, TS, Python, Java, C++, etc.), includes copy-to-clipboard functionality
+
 ## Edge Case Handling
 - **Empty Chat State**: Display welcoming message with upload prompt when no files have been added yet
 - **Unsupported File Types**: Show error toast explaining which file types are supported
@@ -92,6 +99,9 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **ZIP File Handling**: ZIP archives are recognized but not extracted - bot references them as archives
 - **Code File Processing**: Code files (JS, TS, PY, etc.) are read as text and displayed with syntax awareness
 - **Multiple File Attachments**: Support attaching multiple files in messages and knowledge base
+- **Code Block Rendering**: Handle markdown code blocks (```language) with proper syntax highlighting even in long messages
+- **Unsupported Languages**: Display code with basic formatting if language is not recognized by syntax highlighter
+- **Copy Code Failures**: Show error toast if clipboard access is denied or unavailable
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -144,12 +154,15 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - `Badge` - File type indicators in knowledge base (PDF, TXT, JPG) with color coding
   - `Alert` - Error and success notifications using Sonner toasts with appropriate colors
   - `Progress` - File upload progress bar with cyan fill
+  - `CodeBlock` - Custom component with Prism.js for syntax highlighting with language detection and copy button
 
 - **Customizations**:
   - Custom message bubbles (user: cyan accent, bot: muted purple card)
   - Typing indicator component with three animated dots
   - File upload drop zone with dashed border and hover state
   - Knowledge base list items with file icon, name, and remove button
+  - Code block header with language label and copy button (appears on hover)
+  - Syntax-highlighted code display with custom purple-cyan color scheme matching app theme
 
 - **States**:
   - Buttons: Default (cyan), hover (brighter cyan + glow), active (scale down), disabled (muted)
@@ -173,6 +186,8 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Login: `SignIn` (Phosphor, bold)
   - Logout: `SignOut` (Phosphor, bold)
   - User profile: `User` (Phosphor)
+  - Copy code: `Copy` (Phosphor, bold)
+  - Code copied: `Check` (Phosphor, bold, accent color)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)
