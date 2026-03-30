@@ -1594,45 +1594,7 @@ Visual Description:`
         }
       }
 
-      ctx.font = `bold ${Math.min(dimensions.width, dimensions.height) / 20}px 'Space Grotesk', sans-serif`
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      
-      const words = description.split(' ').slice(0, 15)
-      const lines: string[] = []
-      let currentLine = ''
-      
-      words.forEach((word: string) => {
-        const testLine = currentLine + word + ' '
-        const metrics = ctx.measureText(testLine)
-        if (metrics.width > dimensions.width * 0.8 && currentLine !== '') {
-          lines.push(currentLine.trim())
-          currentLine = word + ' '
-        } else {
-          currentLine = testLine
-        }
-      })
-      if (currentLine) lines.push(currentLine.trim())
 
-      const lineHeight = Math.min(dimensions.width, dimensions.height) / 15
-      const startY = (dimensions.height - (lines.length * lineHeight)) / 2
-
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
-      ctx.shadowBlur = 10
-      ctx.shadowOffsetX = 2
-      ctx.shadowOffsetY = 2
-
-      lines.forEach((line, i) => {
-        ctx.fillText(line, dimensions.width / 2, startY + (i * lineHeight))
-      })
-
-      ctx.shadowColor = 'transparent'
-      ctx.shadowBlur = 0
-      
-      ctx.font = `${Math.min(dimensions.width, dimensions.height) / 30}px 'Space Grotesk', sans-serif`
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
-      ctx.fillText(`${styleModifier} Style`, dimensions.width / 2, dimensions.height - 30)
 
       const imageDataUrl = canvas.toDataURL('image/png')
       setGeneratedImage(imageDataUrl)
