@@ -626,7 +626,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                 <ChatsCircle size={28} className="text-primary" weight="duotone" />
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
                   Chatter Box
                 </h1>
                 <p className="text-muted-foreground text-sm md:text-base">
