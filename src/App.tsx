@@ -710,7 +710,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
           </div>
         )}
 
-        <Card className="border-2">
+        <Card className="border-0">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
             <div className="border-b border-border px-4 pt-4">
               <TabsList className="grid w-full grid-cols-4">
