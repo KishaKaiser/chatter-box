@@ -247,16 +247,6 @@ export function ProfileSettings({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hover:bg-accent/10 active:scale-95 transition-transform"
-          title="Settings"
-        >
-          <UserIcon size={18} weight="bold" />
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Settings</DialogTitle>
