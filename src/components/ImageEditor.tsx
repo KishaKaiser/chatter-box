@@ -19,7 +19,8 @@ import {
   Circle,
   Square,
   Eraser,
-  FloppyDisk
+  FloppyDisk,
+  Upload
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 
@@ -33,6 +34,7 @@ interface ImageEditorProps {
 
 export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: ImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null)
   const [brightness, setBrightness] = useState(100)
   const [contrast, setContrast] = useState(100)
@@ -247,6 +249,54 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     }
   }
 
+  const handleUploadImage = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file")
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        setOriginalImage(img)
+        setBrightness(100)
+        setContrast(100)
+        setSaturation(100)
+        setBlur(0)
+        setRotation(0)
+        drawImage(img)
+        toast.success(`${file.name} loaded successfully`)
+      }
+      img.onerror = () => {
+        toast.error("Failed to load image")
+      }
+      if (event.target?.result) {
+        img.src = event.target.result as string
+      }
+    }
+    reader.onerror = () => {
+      toast.error("Failed to read file")
+    }
+    reader.readAsDataURL(file)
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -277,6 +327,14 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
             {mode === "enhance" && "AI-powered image enhancement"}
           </DialogDescription>
         </DialogHeader>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
 
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue={mode === "create" ? "generate" : "edit"} className="h-full flex flex-col">
@@ -389,6 +447,14 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
+                        onClick={handleUploadImage}
+                        className="flex-1 border-accent/50 text-accent hover:bg-accent/10"
+                      >
+                        <Upload size={16} className="mr-2" weight="bold" />
+                        Upload
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={handleReset}
                         className="flex-1"
                       >
@@ -440,6 +506,24 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                       )}
                     </Button>
 
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-popover px-2 text-muted-foreground">Or</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleUploadImage}
+                      variant="outline"
+                      className="w-full border-accent/50 text-accent hover:bg-accent/10"
+                    >
+                      <Upload size={16} className="mr-2" weight="bold" />
+                      Upload Image to Edit
+                    </Button>
+
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground">
                         <strong>Note:</strong> Full AI image generation coming soon. This demo creates abstract visualizations based on your prompt.
@@ -459,6 +543,22 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                   </div>
 
                   <div className="lg:w-80 space-y-4">
+                    {!originalImage && (
+                      <div className="mb-4 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-border">
+                        <p className="text-sm text-muted-foreground text-center mb-3">
+                          No image loaded. Upload an image to get started.
+                        </p>
+                        <Button
+                          onClick={handleUploadImage}
+                          variant="outline"
+                          className="w-full border-accent/50 text-accent hover:bg-accent/10"
+                        >
+                          <Upload size={16} className="mr-2" weight="bold" />
+                          Upload Image
+                        </Button>
+                      </div>
+                    )}
+                    
                     <div className="space-y-2">
                       <Label htmlFor="enhance-prompt">Enhancement Instructions</Label>
                       <textarea
