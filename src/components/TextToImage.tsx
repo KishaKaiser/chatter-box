@@ -46,6 +46,8 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
     { value: "vaporwave", label: "Vaporwave" },
     { value: "cyberpunk", label: "Cyberpunk" },
     { value: "steampunk", label: "Steampunk" },
+    { value: "gothic", label: "Gothic" },
+    { value: "renaissance", label: "Renaissance" },
   ]
 
   const aspectRatios = [
@@ -125,6 +127,8 @@ Visual Description:`
         "vaporwave": ["#ff71ce", "#01cdfe", "#05ffa1", "#b967ff", "#fffb96", "#ff6c11"],
         "cyberpunk": ["#0a0015", "#ff006e", "#00f0ff", "#7b2cbf", "#ff00ff", "#00ffff"],
         "steampunk": ["#3d2817", "#8b6f47", "#d4a574", "#c87533", "#4a4a4a", "#b8860b"],
+        "gothic": ["#1a0a0a", "#2d1a1a", "#4a0000", "#8b0000", "#640000", "#a0522d"],
+        "renaissance": ["#8b4513", "#daa520", "#2f4f4f", "#8b7355", "#cd853f", "#d2691e"],
       }
 
       const colors = colorSchemes[style] || colorSchemes["realistic"]
@@ -1054,6 +1058,524 @@ Visual Description:`
         ctx.beginPath()
         ctx.arc(clockX, clockY, clockRadius * 0.08, 0, Math.PI * 2)
         ctx.fill()
+      } else if (style === "gothic") {
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, dimensions.height)
+        bgGradient.addColorStop(0, colors[0])
+        bgGradient.addColorStop(0.5, colors[1])
+        bgGradient.addColorStop(1, colors[2])
+        ctx.fillStyle = bgGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.globalAlpha = 0.08
+        for (let y = 0; y < dimensions.height; y += 3) {
+          ctx.strokeStyle = colors[4]
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(0, y)
+          ctx.lineTo(dimensions.width, y)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const archCount = 5
+        const archWidth = dimensions.width / (archCount + 1)
+        const archHeight = dimensions.height * 0.6
+        const archY = dimensions.height * 0.3
+        
+        for (let i = 0; i < archCount; i++) {
+          const x = archWidth * (i + 1)
+          
+          ctx.strokeStyle = colors[3]
+          ctx.lineWidth = 4
+          ctx.globalAlpha = 0.6
+          
+          ctx.beginPath()
+          ctx.moveTo(x - archWidth * 0.3, archY + archHeight)
+          
+          ctx.quadraticCurveTo(
+            x - archWidth * 0.3, archY + archHeight * 0.3,
+            x, archY
+          )
+          ctx.quadraticCurveTo(
+            x + archWidth * 0.3, archY + archHeight * 0.3,
+            x + archWidth * 0.3, archY + archHeight
+          )
+          ctx.stroke()
+          
+          ctx.beginPath()
+          ctx.moveTo(x - archWidth * 0.25, archY + archHeight)
+          ctx.lineTo(x - archWidth * 0.25, archY + archHeight * 1.3)
+          ctx.moveTo(x + archWidth * 0.25, archY + archHeight)
+          ctx.lineTo(x + archWidth * 0.25, archY + archHeight * 1.3)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const windowCount = 8
+        for (let i = 0; i < windowCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height * 0.6 + dimensions.height * 0.1
+          const width = Math.random() * 40 + 30
+          const height = Math.random() * 80 + 60
+          
+          const windowGradient = ctx.createLinearGradient(x, y, x, y + height)
+          windowGradient.addColorStop(0, colors[5])
+          windowGradient.addColorStop(1, colors[3])
+          ctx.fillStyle = windowGradient
+          
+          ctx.beginPath()
+          ctx.moveTo(x - width / 2, y + height)
+          ctx.lineTo(x - width / 2, y + height * 0.3)
+          ctx.quadraticCurveTo(x - width / 2, y, x, y)
+          ctx.quadraticCurveTo(x + width / 2, y, x + width / 2, y + height * 0.3)
+          ctx.lineTo(x + width / 2, y + height)
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 2
+          ctx.stroke()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 1.5
+          ctx.beginPath()
+          ctx.moveTo(x, y + height * 0.2)
+          ctx.lineTo(x, y + height)
+          ctx.moveTo(x - width / 2, y + height * 0.5)
+          ctx.lineTo(x + width / 2, y + height * 0.5)
+          ctx.stroke()
+        }
+        
+        const crossX = dimensions.width * 0.75
+        const crossY = dimensions.height * 0.2
+        const crossSize = Math.min(dimensions.width, dimensions.height) * 0.12
+        
+        ctx.strokeStyle = colors[4]
+        ctx.lineWidth = 6
+        ctx.lineCap = 'round'
+        ctx.globalAlpha = 0.7
+        
+        ctx.beginPath()
+        ctx.moveTo(crossX, crossY - crossSize)
+        ctx.lineTo(crossX, crossY + crossSize)
+        ctx.stroke()
+        
+        ctx.beginPath()
+        ctx.moveTo(crossX - crossSize * 0.7, crossY - crossSize * 0.3)
+        ctx.lineTo(crossX + crossSize * 0.7, crossY - crossSize * 0.3)
+        ctx.stroke()
+        
+        ctx.globalAlpha = 1.0
+        
+        ctx.shadowColor = colors[3]
+        ctx.shadowBlur = 30
+        ctx.globalAlpha = 0.4
+        for (let i = 0; i < 12; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 120 + 80
+          const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size)
+          glowGradient.addColorStop(0, colors[3])
+          glowGradient.addColorStop(1, 'transparent')
+          ctx.fillStyle = glowGradient
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.shadowBlur = 0
+        ctx.globalAlpha = 1.0
+        
+        const gargoyleCount = 4
+        for (let i = 0; i < gargoyleCount; i++) {
+          const x = (dimensions.width / (gargoyleCount + 1)) * (i + 1)
+          const y = dimensions.height * 0.15
+          const size = Math.random() * 30 + 25
+          
+          ctx.fillStyle = colors[5]
+          ctx.globalAlpha = 0.5
+          
+          ctx.beginPath()
+          ctx.moveTo(x, y)
+          ctx.lineTo(x - size * 0.6, y + size * 0.8)
+          ctx.lineTo(x - size * 0.3, y + size)
+          ctx.lineTo(x, y + size * 0.9)
+          ctx.lineTo(x + size * 0.3, y + size)
+          ctx.lineTo(x + size * 0.6, y + size * 0.8)
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 2
+          ctx.stroke()
+          
+          ctx.fillStyle = colors[3]
+          ctx.beginPath()
+          ctx.arc(x - size * 0.25, y + size * 0.4, size * 0.1, 0, Math.PI * 2)
+          ctx.arc(x + size * 0.25, y + size * 0.4, size * 0.1, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+      } else if (style === "renaissance") {
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, dimensions.height * 0.6)
+        skyGradient.addColorStop(0, '#87ceeb')
+        skyGradient.addColorStop(0.5, '#b0c4de')
+        skyGradient.addColorStop(1, colors[0])
+        ctx.fillStyle = skyGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        const groundGradient = ctx.createLinearGradient(0, dimensions.height * 0.6, 0, dimensions.height)
+        groundGradient.addColorStop(0, colors[3])
+        groundGradient.addColorStop(1, colors[0])
+        ctx.fillStyle = groundGradient
+        ctx.fillRect(0, dimensions.height * 0.6, dimensions.width, dimensions.height * 0.4)
+        
+        ctx.globalAlpha = 0.4
+        for (let i = 0; i < 8; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height * 0.5
+          const size = Math.random() * 80 + 40
+          const cloudGradient = ctx.createRadialGradient(x, y, 0, x, y, size)
+          cloudGradient.addColorStop(0, '#ffffff')
+          cloudGradient.addColorStop(0.5, '#f0f0f0')
+          cloudGradient.addColorStop(1, 'transparent')
+          ctx.fillStyle = cloudGradient
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.arc(x - size * 0.5, y, size * 0.8, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.arc(x + size * 0.5, y, size * 0.8, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const columnCount = 6
+        const columnSpacing = dimensions.width / (columnCount + 1)
+        const columnHeight = dimensions.height * 0.5
+        const columnY = dimensions.height * 0.5
+        
+        for (let i = 0; i < columnCount; i++) {
+          const x = columnSpacing * (i + 1)
+          const columnWidth = 25
+          
+          const columnGradient = ctx.createLinearGradient(x - columnWidth / 2, columnY, x + columnWidth / 2, columnY)
+          columnGradient.addColorStop(0, colors[2])
+          columnGradient.addColorStop(0.5, colors[4])
+          columnGradient.addColorStop(1, colors[3])
+          ctx.fillStyle = columnGradient
+          
+          const baseHeight = 30
+          ctx.fillRect(x - columnWidth / 2, columnY + columnHeight - baseHeight, columnWidth, baseHeight)
+          
+          const shaftHeight = columnHeight - baseHeight * 2
+          ctx.fillRect(x - columnWidth / 3, columnY + baseHeight, columnWidth * 0.66, shaftHeight)
+          
+          ctx.beginPath()
+          ctx.moveTo(x - columnWidth / 2, columnY + baseHeight)
+          ctx.lineTo(x, columnY)
+          ctx.lineTo(x + columnWidth / 2, columnY + baseHeight)
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 2
+          ctx.globalAlpha = 0.6
+          ctx.strokeRect(x - columnWidth / 2, columnY + columnHeight - baseHeight, columnWidth, baseHeight)
+          ctx.strokeRect(x - columnWidth / 3, columnY + baseHeight, columnWidth * 0.66, shaftHeight)
+          ctx.beginPath()
+          ctx.moveTo(x - columnWidth / 2, columnY + baseHeight)
+          ctx.lineTo(x, columnY)
+          ctx.lineTo(x + columnWidth / 2, columnY + baseHeight)
+          ctx.closePath()
+          ctx.stroke()
+          ctx.globalAlpha = 1.0
+        }
+        
+        const archX = dimensions.width / 2
+        const archWidth = dimensions.width * 0.4
+        const archHeight = dimensions.height * 0.35
+        const archTop = dimensions.height * 0.4
+        
+        ctx.strokeStyle = colors[1]
+        ctx.lineWidth = 5
+        ctx.globalAlpha = 0.5
+        ctx.beginPath()
+        ctx.arc(archX, archTop + archHeight, archWidth / 2, Math.PI, 0, false)
+        ctx.stroke()
+        
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.arc(archX, archTop + archHeight, archWidth / 2.3, Math.PI, 0, false)
+        ctx.stroke()
+        ctx.globalAlpha = 1.0
+        
+        const sunX = dimensions.width * 0.8
+        const sunY = dimensions.height * 0.2
+        const sunRadius = Math.min(dimensions.width, dimensions.height) * 0.08
+        
+        const sunGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius)
+        sunGradient.addColorStop(0, '#fff9e6')
+        sunGradient.addColorStop(0.5, colors[1])
+        sunGradient.addColorStop(1, 'rgba(218, 165, 32, 0)')
+        ctx.fillStyle = sunGradient
+        ctx.beginPath()
+        ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2)
+        ctx.fill()
+        
+        ctx.globalAlpha = 0.3
+        for (let i = 0; i < 15; i++) {
+          const angle = (i / 15) * Math.PI * 2
+          const length = sunRadius * 1.8
+          ctx.strokeStyle = colors[1]
+          ctx.lineWidth = 3
+          ctx.lineCap = 'round'
+          ctx.beginPath()
+          ctx.moveTo(sunX + Math.cos(angle) * sunRadius, sunY + Math.sin(angle) * sunRadius)
+          ctx.lineTo(sunX + Math.cos(angle) * length, sunY + Math.sin(angle) * length)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const ornamentCount = 12
+        for (let i = 0; i < ornamentCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 25 + 15
+          
+          ctx.fillStyle = colors[4]
+          ctx.globalAlpha = 0.4
+          
+          ctx.beginPath()
+          for (let j = 0; j < 8; j++) {
+            const angle = (j / 8) * Math.PI * 2
+            const radius = j % 2 === 0 ? size : size * 0.5
+            const px = x + Math.cos(angle) * radius
+            const py = y + Math.sin(angle) * radius
+            if (j === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
+          }
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[5]
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const towerCount = 3
+        for (let i = 0; i < towerCount; i++) {
+          const x = (dimensions.width / (towerCount + 1)) * (i + 1)
+          const baseY = dimensions.height * 0.85
+          const towerWidth = 40
+          const towerHeight = Math.random() * 150 + 100
+          
+          ctx.fillStyle = colors[1]
+          ctx.globalAlpha = 0.7
+          ctx.fillRect(x - towerWidth / 2, baseY - towerHeight, towerWidth, towerHeight)
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 2
+          ctx.strokeRect(x - towerWidth / 2, baseY - towerHeight, towerWidth, towerHeight)
+          
+          const battlementCount = 5
+          const battlementWidth = towerWidth / battlementCount
+          for (let j = 0; j < battlementCount; j++) {
+            if (j % 2 === 0) {
+              const bx = x - towerWidth / 2 + j * battlementWidth
+              ctx.fillRect(bx, baseY - towerHeight - 10, battlementWidth, 10)
+            }
+          }
+          
+          ctx.globalAlpha = 0.5
+          const windowYPos = baseY - towerHeight * 0.6
+          ctx.fillStyle = colors[3]
+          ctx.fillRect(x - towerWidth * 0.25, windowYPos, towerWidth * 0.5, towerWidth * 0.7)
+          ctx.strokeRect(x - towerWidth * 0.25, windowYPos, towerWidth * 0.5, towerWidth * 0.7)
+        }
+        ctx.globalAlpha = 1.0
+        
+        for (let i = 0; i < 6; i++) {
+          const x = Math.random() * dimensions.width
+          const y = dimensions.height * 0.3 + Math.random() * dimensions.height * 0.3
+          const wingSpan = Math.random() * 40 + 30
+          
+          ctx.fillStyle = colors[0]
+          ctx.globalAlpha = 0.6
+          
+          ctx.beginPath()
+          ctx.ellipse(x, y, wingSpan / 2, wingSpan / 4, 0, 0, Math.PI * 2)
+          ctx.fill()
+          
+          ctx.beginPath()
+          ctx.ellipse(x - wingSpan * 0.3, y - 5, wingSpan / 2, wingSpan / 4, -Math.PI / 6, 0, Math.PI * 2)
+          ctx.fill()
+          
+          ctx.beginPath()
+          ctx.ellipse(x + wingSpan * 0.3, y - 5, wingSpan / 2, wingSpan / 4, Math.PI / 6, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+      } else if (style === "renaissance") {
+        const bgGradient = ctx.createRadialGradient(
+          dimensions.width / 2, dimensions.height / 2, 0,
+          dimensions.width / 2, dimensions.height / 2, Math.max(dimensions.width, dimensions.height) * 0.7
+        )
+        bgGradient.addColorStop(0, '#f5deb3')
+        bgGradient.addColorStop(0.5, colors[4])
+        bgGradient.addColorStop(1, colors[0])
+        ctx.fillStyle = bgGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.strokeStyle = colors[1]
+        ctx.lineWidth = 2
+        ctx.globalAlpha = 0.1
+        const gridSize = 30
+        for (let x = 0; x < dimensions.width; x += gridSize) {
+          ctx.beginPath()
+          ctx.moveTo(x, 0)
+          ctx.lineTo(x, dimensions.height)
+          ctx.stroke()
+        }
+        for (let y = 0; y < dimensions.height; y += gridSize) {
+          ctx.beginPath()
+          ctx.moveTo(0, y)
+          ctx.lineTo(dimensions.width, y)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const frameWidth = 40
+        const frameGradient = ctx.createLinearGradient(0, 0, frameWidth, 0)
+        frameGradient.addColorStop(0, colors[1])
+        frameGradient.addColorStop(0.5, colors[5])
+        frameGradient.addColorStop(1, colors[3])
+        ctx.fillStyle = frameGradient
+        
+        ctx.fillRect(0, 0, frameWidth, dimensions.height)
+        ctx.fillRect(dimensions.width - frameWidth, 0, frameWidth, dimensions.height)
+        ctx.fillRect(0, 0, dimensions.width, frameWidth)
+        ctx.fillRect(0, dimensions.height - frameWidth, dimensions.width, frameWidth)
+        
+        ctx.strokeStyle = colors[0]
+        ctx.lineWidth = 3
+        ctx.strokeRect(frameWidth / 2, frameWidth / 2, dimensions.width - frameWidth, dimensions.height - frameWidth)
+        ctx.strokeRect(frameWidth * 0.75, frameWidth * 0.75, dimensions.width - frameWidth * 1.5, dimensions.height - frameWidth * 1.5)
+        
+        const ornamentSize = 20
+        const positions = [
+          { x: frameWidth / 2, y: frameWidth / 2 },
+          { x: dimensions.width - frameWidth / 2, y: frameWidth / 2 },
+          { x: frameWidth / 2, y: dimensions.height - frameWidth / 2 },
+          { x: dimensions.width - frameWidth / 2, y: dimensions.height - frameWidth / 2 },
+        ]
+        
+        positions.forEach(pos => {
+          ctx.fillStyle = colors[1]
+          ctx.beginPath()
+          for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2
+            const px = pos.x + Math.cos(angle) * ornamentSize
+            const py = pos.y + Math.sin(angle) * ornamentSize
+            if (i === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
+          }
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.fillStyle = colors[1]
+          ctx.beginPath()
+          ctx.arc(pos.x, pos.y, ornamentSize * 0.5, 0, Math.PI * 2)
+          ctx.fill()
+        })
+        
+        const figureX = dimensions.width / 2
+        const figureY = dimensions.height / 2
+        const figureSize = Math.min(dimensions.width, dimensions.height) * 0.25
+        
+        const figureGradient = ctx.createRadialGradient(figureX, figureY, 0, figureX, figureY, figureSize)
+        figureGradient.addColorStop(0, '#ffd7a8')
+        figureGradient.addColorStop(0.7, colors[3])
+        figureGradient.addColorStop(1, colors[2])
+        ctx.fillStyle = figureGradient
+        ctx.globalAlpha = 0.6
+        ctx.beginPath()
+        ctx.arc(figureX, figureY, figureSize, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1.0
+        
+        ctx.strokeStyle = colors[1]
+        ctx.lineWidth = 3
+        ctx.globalAlpha = 0.5
+        ctx.beginPath()
+        ctx.arc(figureX, figureY, figureSize * 1.2, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.globalAlpha = 1.0
+        
+        const draperyCurves = 8
+        for (let i = 0; i < draperyCurves; i++) {
+          const x = (dimensions.width / draperyCurves) * i
+          const amplitude = Math.random() * 30 + 20
+          const wavelength = dimensions.width / draperyCurves
+          
+          ctx.strokeStyle = colors[2]
+          ctx.lineWidth = 2
+          ctx.globalAlpha = 0.3
+          ctx.beginPath()
+          ctx.moveTo(x, dimensions.height * 0.6)
+          
+          for (let j = 0; j < dimensions.height * 0.4; j += 10) {
+            const y = dimensions.height * 0.6 + j
+            const offset = Math.sin((j / wavelength) * Math.PI * 2) * amplitude
+            ctx.lineTo(x + offset, y)
+          }
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const leafCount = 20
+        for (let i = 0; i < leafCount; i++) {
+          const x = frameWidth + Math.random() * (dimensions.width - frameWidth * 2)
+          const y = frameWidth + Math.random() * (dimensions.height - frameWidth * 2)
+          const size = Math.random() * 15 + 8
+          
+          ctx.fillStyle = colors[2]
+          ctx.globalAlpha = 0.4
+          
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(Math.random() * Math.PI * 2)
+          
+          ctx.beginPath()
+          ctx.moveTo(0, -size)
+          ctx.quadraticCurveTo(size * 0.6, -size * 0.5, size * 0.5, 0)
+          ctx.quadraticCurveTo(size * 0.6, size * 0.5, 0, size)
+          ctx.quadraticCurveTo(-size * 0.6, size * 0.5, -size * 0.5, 0)
+          ctx.quadraticCurveTo(-size * 0.6, -size * 0.5, 0, -size)
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[3]
+          ctx.lineWidth = 1
+          ctx.stroke()
+          
+          ctx.restore()
+        }
+        ctx.globalAlpha = 1.0
+        
+        ctx.globalAlpha = 0.15
+        for (let i = 0; i < 5; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 150 + 100
+          
+          const textureGradient = ctx.createRadialGradient(x, y, 0, x, y, size)
+          textureGradient.addColorStop(0, colors[5])
+          textureGradient.addColorStop(1, 'transparent')
+          ctx.fillStyle = textureGradient
+          ctx.fillRect(x - size, y - size, size * 2, size * 2)
+        }
+        ctx.globalAlpha = 1.0
       } else {
         colors.forEach((color, i) => {
           gradient.addColorStop(i / (colors.length - 1), color)
