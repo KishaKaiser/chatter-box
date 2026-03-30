@@ -42,6 +42,7 @@ function App() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [currentSearchQuery, setCurrentSearchQuery] = useState("")
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -684,12 +685,15 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   onBulkUnarchive={handleBulkUnarchive}
                   onImageSaveToChat={handleImageSaveToChat}
                   onStorySaveToChat={handleStorySaveToChat}
+                  externalOpen={settingsOpen}
+                  onExternalOpenChange={setSettingsOpen}
                 />
               )}
               <UserAccount
                 currentUser={currentUser || null}
                 onLogin={handleLogin}
                 onLogout={handleLogout}
+                onOpenSettings={() => setSettingsOpen(true)}
               />
             </div>
           </div>

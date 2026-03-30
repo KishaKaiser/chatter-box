@@ -41,6 +41,8 @@ interface ProfileSettingsProps {
   onBulkUnarchive: (threadIds: string[]) => void
   onImageSaveToChat: (imageDataUrl: string) => void
   onStorySaveToChat: (storyText: string) => void
+  externalOpen?: boolean
+  onExternalOpenChange?: (open: boolean) => void
 }
 
 const AVATAR_PRESETS = [
@@ -75,7 +77,9 @@ export function ProfileSettings({
   onBulkArchive,
   onBulkUnarchive,
   onImageSaveToChat,
-  onStorySaveToChat
+  onStorySaveToChat,
+  externalOpen,
+  onExternalOpenChange
 }: ProfileSettingsProps) {
   const [open, setOpen] = useState(false)
   const [displayName, setDisplayName] = useState(currentUser.displayName || currentUser.username)
@@ -87,6 +91,9 @@ export function ProfileSettings({
   const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isOpen = externalOpen !== undefined ? externalOpen : open
+  const setIsOpen = onExternalOpenChange || setOpen
 
   const handleSave = () => {
     if (!displayName.trim()) {
@@ -107,7 +114,7 @@ export function ProfileSettings({
 
     onUpdateProfile(updatedUser)
     toast.success("Profile updated successfully!")
-    setOpen(false)
+    setIsOpen(false)
   }
 
   const handleCustomAvatarSubmit = () => {
@@ -239,7 +246,7 @@ export function ProfileSettings({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"

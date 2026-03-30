@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useKV } from "@github/spark/hooks"
-import { SignIn, SignOut, User as UserIcon } from "@phosphor-icons/react"
+import { SignIn, SignOut, User as UserIcon, Gear, CaretDown } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -13,6 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 
@@ -29,9 +36,10 @@ interface UserAccountProps {
   currentUser: UserAccount | null
   onLogin: (user: UserAccount) => void
   onLogout: () => void
+  onOpenSettings?: () => void
 }
 
-export function UserAccount({ currentUser, onLogin, onLogout }: UserAccountProps) {
+export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings }: UserAccountProps) {
   const [allAccounts, setAllAccounts] = useKV<UserAccount[]>("user-accounts", [])
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [username, setUsername] = useState("")
@@ -135,28 +143,48 @@ export function UserAccount({ currentUser, onLogin, onLogout }: UserAccountProps
     const displayName = currentUser.displayName || currentUser.username
     
     return (
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg">
-          <Avatar className="h-7 w-7 bg-primary/20">
-            {currentUser.avatarUrl ? (
-              <AvatarImage src={currentUser.avatarUrl} alt={displayName} />
-            ) : null}
-            <AvatarFallback className="bg-primary/20 text-primary text-xs font-medium">
-              {getUserInitials(displayName)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium">{displayName}</span>
-        </div>
-        <Button
-          onClick={handleLogout}
-          variant="outline"
-          className="border-destructive/50 text-destructive hover:bg-destructive/10 active:scale-95 transition-transform gap-2"
-          size="sm"
-        >
-          <SignOut size={18} weight="bold" />
-          <span className="hidden sm:inline">Logout</span>
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="border-accent/50 hover:bg-accent/10 active:scale-95 transition-transform gap-2 px-3"
+          >
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6 bg-primary/20">
+                {currentUser.avatarUrl ? (
+                  <AvatarImage src={currentUser.avatarUrl} alt={displayName} />
+                ) : null}
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-medium">
+                  {getUserInitials(displayName)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium hidden sm:inline">{displayName}</span>
+              <CaretDown size={14} weight="bold" className="text-muted-foreground" />
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {onOpenSettings && (
+            <>
+              <DropdownMenuItem 
+                onClick={onOpenSettings}
+                className="cursor-pointer gap-2"
+              >
+                <Gear size={16} weight="fill" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem 
+            onClick={handleLogout}
+            className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+          >
+            <SignOut size={16} weight="bold" />
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
