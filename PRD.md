@@ -13,7 +13,7 @@ This is a chat interface with file upload capabilities and conversational AI - i
 ## Essential Features
 
 **Document & Image Upload**
-- Functionality: Users can upload documents (PDF, TXT, MD) and images (PNG, JPG) to teach the bot
+- Functionality: Users can upload various file types including documents (PDF, TXT, MD), images (PNG, JPG), ZIP archives, and code files (JS, TS, PY, JAVA, etc.)
 - Purpose: Builds the bot's knowledge base so it can answer questions based on uploaded content
 - Trigger: Click upload button or drag-and-drop files into designated area
 - Progression: Select file → Upload with visual feedback → File processes → Added to knowledge base → Confirmation message
@@ -70,8 +70,8 @@ This is a chat interface with file upload capabilities and conversational AI - i
 
 ## Edge Case Handling
 - **Empty Chat State**: Display welcoming message with upload prompt when no files have been added yet
-- **Unsupported File Types**: Show error toast explaining which file types are supported (PDF, TXT, MD, PNG, JPG)
-- **Large File Uploads**: Display progress indicator for files over 1MB, show error for files exceeding size limits
+- **Unsupported File Types**: Show error toast explaining which file types are supported
+- **Large File Uploads**: Display progress indicator for files over 1MB, show error for files exceeding 10MB limit
 - **No Knowledge Base**: Bot responds helpfully but indicates it has no custom knowledge to reference
 - **Rapid Messages**: Queue messages if user sends multiple quickly, process in order
 - **Failed Uploads**: Clear error message with retry option if upload fails
@@ -89,6 +89,9 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Account Not Found**: Show helpful error when attempting to login with non-existent account
 - **Guest Mode**: Allow users to use the app without logging in (data stored under "guest" key)
 - **User Data Isolation**: Ensure each user's messages and knowledge files are completely separate
+- **ZIP File Handling**: ZIP archives are recognized but not extracted - bot references them as archives
+- **Code File Processing**: Code files (JS, TS, PY, etc.) are read as text and displayed with syntax awareness
+- **Multiple File Attachments**: Support attaching multiple files in messages and knowledge base
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -160,7 +163,8 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Bot avatar: `Robot` (Phosphor)
   - User avatar: `User` (Phosphor)
   - Remove file: `X` or `Trash` (Phosphor)
-  - File types: `File`, `FileImage`, `FilePdf` (Phosphor)
+  - File types: `File`, `FileImage`, `FilePdf`, `FileText` (Phosphor)
+  - File attachments: `Paperclip` (Phosphor, filled)
   - Voice input (inactive): `Microphone` (Phosphor, filled)
   - Voice input (active): `MicrophoneSlash` (Phosphor, filled, pulsing animation)
   - Text-to-speech (inactive): `SpeakerHigh` (Phosphor, filled, muted color)

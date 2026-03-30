@@ -98,18 +98,24 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
       .slice(0, 2)
   }
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string, name: string) => {
     if (type.includes("image")) return <FileImage size={16} weight="fill" />
     if (type.includes("pdf")) return <FilePdf size={16} weight="fill" />
-    if (type.includes("text") || type.includes("markdown")) return <FileText size={16} weight="fill" />
+    if (type.includes("text") || type.includes("markdown") || name.match(/\.(js|jsx|ts|tsx|py|java|cpp|c|h|css|html|json|xml|yaml|yml|go|rs|rb|php|swift|kt|sh)$/i)) return <FileText size={16} weight="fill" />
+    if (type.includes("zip") || name.endsWith(".zip")) return <File size={16} weight="fill" />
     return <File size={16} weight="fill" />
   }
 
-  const getFileTypeLabel = (type: string): string => {
+  const getFileTypeLabel = (type: string, name: string): string => {
     if (type.includes("image")) return "IMAGE"
     if (type.includes("pdf")) return "PDF"
     if (type.includes("text")) return "TXT"
     if (type.includes("markdown")) return "MD"
+    if (type.includes("zip") || name.endsWith(".zip")) return "ZIP"
+    const extension = name.split(".").pop()?.toUpperCase()
+    if (extension && ["JS", "JSX", "TS", "TSX", "PY", "JAVA", "CPP", "C", "H", "CSS", "HTML", "JSON", "XML", "YAML", "YML", "GO", "RS", "RB", "PHP", "SWIFT", "KT", "SH"].includes(extension)) {
+      return extension
+    }
     return "FILE"
   }
 
@@ -117,22 +123,24 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
     if (!selectedFiles || selectedFiles.length === 0) return
 
     const file = selectedFiles[0]
-    const supportedTypes = [
-      "text/plain",
-      "text/markdown",
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
+    const fileName = file.name.toLowerCase()
+    
+    const supportedExtensions = [
+      '.txt', '.md', '.pdf', '.png', '.jpg', '.jpeg', '.zip',
+      '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h',
+      '.css', '.html', '.json', '.xml', '.yaml', '.yml', '.go', '.rs',
+      '.rb', '.php', '.swift', '.kt', '.sh', '.cs', '.r', '.sql', '.vue'
     ]
 
-    if (!supportedTypes.some((type) => file.type.includes(type.split("/")[1]))) {
-      toast.error("Unsupported file type. Please upload PDF, TXT, MD, PNG, or JPG files.")
+    const isSupported = supportedExtensions.some(ext => fileName.endsWith(ext))
+
+    if (!isSupported) {
+      toast.error("Unsupported file type. Please upload code files, documents, images, or ZIP archives.")
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB")
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB")
       return
     }
 
@@ -148,6 +156,9 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
       } else if (file.type === "application/pdf") {
         content = "[PDF content - viewable as image data]"
         toast.info("PDF uploaded. Bot can reference this document.")
+      } else if (fileName.endsWith(".zip") || file.type === "application/zip" || file.type === "application/x-zip-compressed") {
+        content = "[ZIP archive - contains multiple files]"
+        toast.info("ZIP file uploaded. Bot can reference this archive.")
       } else {
         content = await file.text()
       }
@@ -155,7 +166,7 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
       const newFile: KnowledgeFile = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         name: file.name,
-        type: file.type,
+        type: file.type || 'application/octet-stream',
         content,
         uploadedAt: Date.now(),
       }
@@ -352,7 +363,7 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".txt,.md,.pdf,.png,.jpg,.jpeg"
+                accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.zip,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.h,.css,.html,.json,.xml,.yaml,.yml,.go,.rs,.rb,.php,.swift,.kt,.sh,.cs,.r,.sql,.vue"
                 onChange={handleInputChange}
               />
               <UploadSimple size={40} className="mx-auto mb-3 text-muted-foreground" />
@@ -360,7 +371,7 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
                 Drop files here or click to upload
               </p>
               <p className="text-xs text-muted-foreground">
-                Supports PDF, TXT, MD, PNG, JPG (max 5MB)
+                Supports code files, documents, images, and ZIP archives (max 10MB)
               </p>
             </div>
 
@@ -376,7 +387,7 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
                       transition={{ duration: 0.25 }}
                       className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg group hover:bg-muted/70 transition-colors"
                     >
-                      <div className="text-accent">{getFileIcon(file.type)}</div>
+                      <div className="text-accent">{getFileIcon(file.type, file.name)}</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{file.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -384,7 +395,7 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
                         </p>
                       </div>
                       <Badge variant="outline" className="text-xs">
-                        {getFileTypeLabel(file.type)}
+                        {getFileTypeLabel(file.type, file.name)}
                       </Badge>
                       <Button
                         size="icon"

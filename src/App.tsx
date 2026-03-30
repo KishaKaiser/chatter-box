@@ -149,29 +149,31 @@ Provide a helpful, conversational response. If the question relates to the uploa
     if (!selectedFiles || selectedFiles.length === 0) return
 
     const file = selectedFiles[0]
-    const supportedTypes = [
-      "text/plain",
-      "text/markdown",
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
+    const fileName = file.name.toLowerCase()
+    
+    const supportedExtensions = [
+      '.txt', '.md', '.pdf', '.png', '.jpg', '.jpeg', '.zip',
+      '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h',
+      '.css', '.html', '.json', '.xml', '.yaml', '.yml', '.go', '.rs',
+      '.rb', '.php', '.swift', '.kt', '.sh', '.cs', '.r', '.sql', '.vue'
     ]
 
-    if (!supportedTypes.some((type) => file.type.includes(type.split("/")[1]))) {
-      toast.error("Unsupported file type. Please upload PDF, TXT, MD, PNG, or JPG files.")
+    const isSupported = supportedExtensions.some(ext => fileName.endsWith(ext))
+
+    if (!isSupported) {
+      toast.error("Unsupported file type. Please upload code files, documents, images, or ZIP archives.")
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB")
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB")
       return
     }
 
     const attachment: MessageAttachment = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       name: file.name,
-      type: file.type,
+      type: file.type || 'application/octet-stream',
       size: file.size,
     }
 
@@ -392,7 +394,7 @@ Provide a helpful, conversational response. If the question relates to the uploa
                 <Paperclip size={48} className="text-accent mx-auto mb-3" weight="fill" />
                 <p className="text-lg font-semibold text-center">Drop file here</p>
                 <p className="text-sm text-muted-foreground text-center mt-1">
-                  PDF, TXT, MD, PNG, JPG (max 5MB)
+                  Code files, documents, images, ZIP (max 10MB)
                 </p>
               </motion.div>
             </div>
@@ -462,7 +464,7 @@ Provide a helpful, conversational response. If the question relates to the uploa
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".txt,.md,.pdf,.png,.jpg,.jpeg"
+                accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.zip,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.h,.css,.html,.json,.xml,.yaml,.yml,.go,.rs,.rb,.php,.swift,.kt,.sh,.cs,.r,.sql,.vue"
                 onChange={handleFileInputChange}
               />
               <Button

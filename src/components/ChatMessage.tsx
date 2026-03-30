@@ -30,18 +30,24 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
   const isThisMessageSpeaking = isSpeaking && currentText === message.content
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string, name: string) => {
     if (type.includes("image")) return <FileImage size={16} weight="fill" />
     if (type.includes("pdf")) return <FilePdf size={16} weight="fill" />
-    if (type.includes("text") || type.includes("markdown")) return <FileText size={16} weight="fill" />
+    if (type.includes("text") || type.includes("markdown") || name.match(/\.(js|jsx|ts|tsx|py|java|cpp|c|h|css|html|json|xml|yaml|yml|go|rs|rb|php|swift|kt|sh)$/i)) return <FileText size={16} weight="fill" />
+    if (type.includes("zip") || name.endsWith(".zip")) return <FileIcon size={16} weight="fill" />
     return <FileIcon size={16} weight="fill" />
   }
 
-  const getFileTypeLabel = (type: string): string => {
+  const getFileTypeLabel = (type: string, name: string): string => {
     if (type.includes("image")) return "IMAGE"
     if (type.includes("pdf")) return "PDF"
     if (type.includes("text")) return "TXT"
     if (type.includes("markdown")) return "MD"
+    if (type.includes("zip") || name.endsWith(".zip")) return "ZIP"
+    const extension = name.split(".").pop()?.toUpperCase()
+    if (extension && ["JS", "JSX", "TS", "TSX", "PY", "JAVA", "CPP", "C", "H", "CSS", "HTML", "JSON", "XML", "YAML", "YML", "GO", "RS", "RB", "PHP", "SWIFT", "KT", "SH", "CS", "R", "SQL", "VUE"].includes(extension)) {
+      return extension
+    }
     return "FILE"
   }
   
@@ -96,7 +102,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   }`}
                 >
                   <div className={isBot ? "text-primary" : "text-accent-foreground/70"}>
-                    {getFileIcon(attachment.type)}
+                    {getFileIcon(attachment.type, attachment.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{attachment.name}</p>
@@ -107,7 +113,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                     )}
                   </div>
                   <Badge variant="secondary" className="text-[10px] h-5">
-                    {getFileTypeLabel(attachment.type)}
+                    {getFileTypeLabel(attachment.type, attachment.name)}
                   </Badge>
                 </div>
               ))}
