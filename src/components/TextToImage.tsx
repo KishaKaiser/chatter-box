@@ -98,31 +98,103 @@ Visual Description:`
         "anime": ["#ff9ff3", "#feca57", "#48dbfb", "#ff6348"],
         "digital-art": ["#00d2ff", "#3a47d5", "#f093fb", "#4facfe"],
         "oil-painting": ["#8b4513", "#daa520", "#556b2f", "#8b0000"],
-        "watercolor": ["#a8e6cf", "#dcedc1", "#ffd3b6", "#ffaaa5"],
-        "sketch": ["#2c3e50", "#95a5a6", "#bdc3c7", "#ecf0f1"],
+        "watercolor": ["#e3f2fd", "#b3e5fc", "#81d4fa", "#4fc3f7", "#29b6f6"],
+        "sketch": ["#f5f5f5", "#e0e0e0", "#9e9e9e", "#616161", "#424242"],
         "3d-render": ["#667eea", "#764ba2", "#f093fb", "#4facfe"],
         "pixel-art": ["#ff0080", "#00ffff", "#ffff00", "#00ff00"],
         "fantasy": ["#9d50bb", "#6e48aa", "#fc466b", "#3f5efb"],
         "sci-fi": ["#00f260", "#0575e6", "#4776e6", "#8e54e9"],
-        "cinematic": ["#1c1c1c", "#2d4263", "#c84b31", "#ecdbba"],
+        "cinematic": ["#0a0a0a", "#1a1a1a", "#8b6914", "#d4af37", "#f4e4c1"],
       }
 
       const colors = colorSchemes[style] || colorSchemes["realistic"]
-      colors.forEach((color, i) => {
-        gradient.addColorStop(i / (colors.length - 1), color)
-      })
+      
+      if (style === "watercolor") {
+        const radialGradient = ctx.createRadialGradient(
+          dimensions.width / 2, dimensions.height / 2, 0,
+          dimensions.width / 2, dimensions.height / 2, Math.max(dimensions.width, dimensions.height) / 2
+        )
+        colors.forEach((color, i) => {
+          radialGradient.addColorStop(i / (colors.length - 1), color)
+        })
+        ctx.fillStyle = radialGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.globalAlpha = 0.15
+        for (let i = 0; i < 80; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 150 + 50
+          const colorIndex = Math.floor(Math.random() * colors.length)
+          ctx.fillStyle = colors[colorIndex]
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+      } else if (style === "sketch") {
+        ctx.fillStyle = colors[0]
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.strokeStyle = colors[colors.length - 1]
+        ctx.lineWidth = 2
+        ctx.globalAlpha = 0.3
+        
+        for (let i = 0; i < 100; i++) {
+          ctx.beginPath()
+          ctx.moveTo(Math.random() * dimensions.width, Math.random() * dimensions.height)
+          ctx.lineTo(Math.random() * dimensions.width, Math.random() * dimensions.height)
+          ctx.stroke()
+        }
+        
+        for (let i = 0; i < 30; i++) {
+          ctx.beginPath()
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 80 + 20
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+        
+        ctx.globalAlpha = 1.0
+      } else if (style === "cinematic") {
+        const cinematicGradient = ctx.createLinearGradient(0, 0, 0, dimensions.height)
+        colors.forEach((color, i) => {
+          cinematicGradient.addColorStop(i / (colors.length - 1), color)
+        })
+        ctx.fillStyle = cinematicGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height * 0.15)
+        ctx.fillRect(0, dimensions.height * 0.85, dimensions.width, dimensions.height * 0.15)
+        
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.1)'
+        const lightX = dimensions.width * 0.3
+        const lightGradient = ctx.createRadialGradient(
+          lightX, dimensions.height / 2, 0,
+          lightX, dimensions.height / 2, dimensions.width * 0.6
+        )
+        lightGradient.addColorStop(0, 'rgba(255, 215, 0, 0.3)')
+        lightGradient.addColorStop(1, 'rgba(255, 215, 0, 0)')
+        ctx.fillStyle = lightGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+      } else {
+        colors.forEach((color, i) => {
+          gradient.addColorStop(i / (colors.length - 1), color)
+        })
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
 
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, dimensions.width, dimensions.height)
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
-      for (let i = 0; i < 50; i++) {
-        const x = Math.random() * dimensions.width
-        const y = Math.random() * dimensions.height
-        const size = Math.random() * 100 + 20
-        ctx.beginPath()
-        ctx.arc(x, y, size, 0, Math.PI * 2)
-        ctx.fill()
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
+        for (let i = 0; i < 50; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 100 + 20
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
       }
 
       ctx.font = `bold ${Math.min(dimensions.width, dimensions.height) / 20}px 'Space Grotesk', sans-serif`
