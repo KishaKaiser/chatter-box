@@ -54,6 +54,8 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
   const [cropEnd, setCropEnd] = useState<{ x: number; y: number } | null>(null)
   const [cropRect, setCropRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
+  const [customRatioWidth, setCustomRatioWidth] = useState("")
+  const [customRatioHeight, setCustomRatioHeight] = useState("")
 
   useEffect(() => {
     if (open && imageUrl && mode === "edit") {
@@ -384,11 +386,25 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setCropAspectRatio(aspectRatio)
     
     if (aspectRatio) {
-      const ratioText = aspectRatio === 1 ? "1:1" : aspectRatio === 4/3 ? "4:3" : "16:9"
+      const ratioText = aspectRatio === 1 ? "1:1" : aspectRatio === 4/3 ? "4:3" : aspectRatio === 16/9 ? "16:9" : `${aspectRatio.toFixed(2)}:1`
       toast.info(`Click and drag to select ${ratioText} crop area`)
     } else {
       toast.info("Click and drag to select crop area")
     }
+  }
+
+  const applyCustomRatio = () => {
+    const width = parseFloat(customRatioWidth)
+    const height = parseFloat(customRatioHeight)
+    
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+      toast.error("Please enter valid positive numbers")
+      return
+    }
+    
+    const ratio = width / height
+    startCrop(ratio)
+    toast.success(`Custom ratio ${width}:${height} applied`)
   }
 
   const cancelCrop = () => {
@@ -653,7 +669,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                           Click and drag on the image to select the area you want to keep.
                           {cropAspectRatio && (
                             <span className="block mt-1 text-accent font-medium">
-                              Aspect ratio: {cropAspectRatio === 1 ? "1:1" : cropAspectRatio === 4/3 ? "4:3" : "16:9"}
+                              Aspect ratio: {cropAspectRatio === 1 ? "1:1" : cropAspectRatio === 4/3 ? "4:3" : cropAspectRatio === 16/9 ? "16:9" : cropAspectRatio.toFixed(2) + ":1"}
                             </span>
                           )}
                         </p>
@@ -732,6 +748,41 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                               className="text-xs"
                             >
                               16:9
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Custom Aspect Ratio</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              placeholder="W"
+                              value={customRatioWidth}
+                              onChange={(e) => setCustomRatioWidth(e.target.value)}
+                              disabled={!originalImage || isCropping}
+                              className="flex-1 text-sm"
+                              min="1"
+                              step="1"
+                            />
+                            <span className="flex items-center text-muted-foreground font-bold">:</span>
+                            <Input
+                              type="number"
+                              placeholder="H"
+                              value={customRatioHeight}
+                              onChange={(e) => setCustomRatioHeight(e.target.value)}
+                              disabled={!originalImage || isCropping}
+                              className="flex-1 text-sm"
+                              min="1"
+                              step="1"
+                            />
+                            <Button
+                              onClick={applyCustomRatio}
+                              disabled={!originalImage || isCropping || !customRatioWidth || !customRatioHeight}
+                              variant="outline"
+                              size="sm"
+                              className="border-accent/50 text-accent hover:bg-accent/10"
+                            >
+                              <Crop size={16} weight="fill" />
                             </Button>
                           </div>
                         </div>
