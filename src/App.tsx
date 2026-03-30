@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Image as ImageIcon, BookOpen, Globe } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Globe } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -10,9 +10,7 @@ import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { ProfileSettings } from "@/components/ProfileSettings"
-import { ConversationThreads, ConversationThread } from "@/components/ConversationThreads"
-import { ImageEditor } from "@/components/ImageEditor"
-import { StoryCreator } from "@/components/StoryCreator"
+import { ConversationThread } from "@/components/ConversationThreads"
 import { WebSearch, SearchResult } from "@/components/WebSearch"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
@@ -48,10 +46,6 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
-  const [imageEditorOpen, setImageEditorOpen] = useState(false)
-  const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("create")
-  const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
-  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false)
 
   useEffect(() => {
     const threadList = threads || []
@@ -501,9 +495,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
   }
 
   const handleImageClick = (imageUrl: string) => {
-    setImageToEdit(imageUrl)
-    setImageEditorMode("edit")
-    setImageEditorOpen(true)
+    toast.info("Open Settings > Images tab to edit this image")
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -651,42 +643,6 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setStoryCreatorOpen(true)}
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 active:scale-95 transition-transform gap-2"
-                size="sm"
-                title="Create stories"
-              >
-                <BookOpen size={18} weight="fill" />
-                <span className="hidden sm:inline">Stories</span>
-              </Button>
-              <Button
-                onClick={() => {
-                  setImageEditorMode("create")
-                  setImageToEdit(undefined)
-                  setImageEditorOpen(true)
-                }}
-                variant="outline"
-                className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform gap-2"
-                size="sm"
-                title="Image tools"
-              >
-                <ImageIcon size={18} weight="fill" />
-                <span className="hidden sm:inline">Images</span>
-              </Button>
-              <ConversationThreads
-                threads={threadList}
-                currentThreadId={activeThreadId}
-                onThreadSelect={handleThreadSelect}
-                onThreadCreate={handleThreadCreate}
-                onThreadDelete={handleThreadDelete}
-                onThreadRename={handleThreadRename}
-                onThreadArchive={handleThreadArchive}
-                onThreadUnarchive={handleThreadUnarchive}
-                onBulkArchive={handleBulkArchive}
-                onBulkUnarchive={handleBulkUnarchive}
-              />
               {currentMessages.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -716,6 +672,18 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   knowledgeFiles={currentFiles}
                   onAddFile={handleAddFile}
                   onRemoveFile={handleRemoveFile}
+                  threads={threadList}
+                  currentThreadId={activeThreadId}
+                  onThreadSelect={handleThreadSelect}
+                  onThreadCreate={handleThreadCreate}
+                  onThreadDelete={handleThreadDelete}
+                  onThreadRename={handleThreadRename}
+                  onThreadArchive={handleThreadArchive}
+                  onThreadUnarchive={handleThreadUnarchive}
+                  onBulkArchive={handleBulkArchive}
+                  onBulkUnarchive={handleBulkUnarchive}
+                  onImageSaveToChat={handleImageSaveToChat}
+                  onStorySaveToChat={handleStorySaveToChat}
                 />
               )}
               <UserAccount
@@ -916,20 +884,6 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
           </div>
         </Card>
       </div>
-
-      <ImageEditor
-        open={imageEditorOpen}
-        onClose={() => setImageEditorOpen(false)}
-        imageUrl={imageToEdit}
-        mode={imageEditorMode}
-        onSaveToChat={handleImageSaveToChat}
-      />
-
-      <StoryCreator
-        open={storyCreatorOpen}
-        onClose={() => setStoryCreatorOpen(false)}
-        onSaveToChat={handleStorySaveToChat}
-      />
     </div>
   )
 }

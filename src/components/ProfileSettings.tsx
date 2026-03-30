@@ -1,5 +1,5 @@
 import { useState, useRef, ChangeEvent } from "react"
-import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText } from "@phosphor-icons/react"
+import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +19,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { UserAccount } from "@/components/UserAccount"
 import { KnowledgeFile } from "@/components/KnowledgeBase"
+import { ConversationThread } from "@/components/ConversationThreads"
+import { ImageEditor } from "@/components/ImageEditor"
+import { StoryCreator } from "@/components/StoryCreator"
 
 interface ProfileSettingsProps {
   currentUser: UserAccount
@@ -26,6 +29,18 @@ interface ProfileSettingsProps {
   knowledgeFiles: KnowledgeFile[]
   onAddFile: (file: KnowledgeFile) => void
   onRemoveFile: (id: string) => void
+  threads: ConversationThread[]
+  currentThreadId: string
+  onThreadSelect: (threadId: string) => void
+  onThreadCreate: (title: string) => void
+  onThreadDelete: (threadId: string) => void
+  onThreadRename: (threadId: string, newTitle: string) => void
+  onThreadArchive: (threadId: string) => void
+  onThreadUnarchive: (threadId: string) => void
+  onBulkArchive: (threadIds: string[]) => void
+  onBulkUnarchive: (threadIds: string[]) => void
+  onImageSaveToChat: (imageDataUrl: string) => void
+  onStorySaveToChat: (storyText: string) => void
 }
 
 const AVATAR_PRESETS = [
@@ -43,12 +58,34 @@ const AVATAR_PRESETS = [
   "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily",
 ]
 
-export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, onAddFile, onRemoveFile }: ProfileSettingsProps) {
+export function ProfileSettings({ 
+  currentUser, 
+  onUpdateProfile, 
+  knowledgeFiles, 
+  onAddFile, 
+  onRemoveFile,
+  threads,
+  currentThreadId,
+  onThreadSelect,
+  onThreadCreate,
+  onThreadDelete,
+  onThreadRename,
+  onThreadArchive,
+  onThreadUnarchive,
+  onBulkArchive,
+  onBulkUnarchive,
+  onImageSaveToChat,
+  onStorySaveToChat
+}: ProfileSettingsProps) {
   const [open, setOpen] = useState(false)
   const [displayName, setDisplayName] = useState(currentUser.displayName || currentUser.username)
   const [selectedAvatar, setSelectedAvatar] = useState(currentUser.avatarUrl || "")
   const [customAvatarUrl, setCustomAvatarUrl] = useState("")
   const [isDragging, setIsDragging] = useState(false)
+  const [imageEditorOpen, setImageEditorOpen] = useState(false)
+  const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("create")
+  const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSave = () => {
@@ -222,14 +259,22 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="knowledge">
-              Knowledge Base
-              <Badge variant="secondary" className="ml-2 text-xs">
+          <TabsList className="grid w-full grid-cols-5 gap-1">
+            <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
+            <TabsTrigger value="knowledge" className="text-xs sm:text-sm">
+              Knowledge
+              <Badge variant="secondary" className="ml-1 text-xs hidden sm:inline-flex">
                 {knowledgeFiles.length}
               </Badge>
             </TabsTrigger>
+            <TabsTrigger value="conversations" className="text-xs sm:text-sm">
+              Chats
+              <Badge variant="secondary" className="ml-1 text-xs hidden sm:inline-flex">
+                {threads.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="images" className="text-xs sm:text-sm">Images</TabsTrigger>
+            <TabsTrigger value="stories" className="text-xs sm:text-sm">Stories</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6 py-4">
@@ -421,8 +466,350 @@ export function ProfileSettings({ currentUser, onUpdateProfile, knowledgeFiles, 
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="conversations" className="space-y-4 py-4">
+            <ConversationsTabContent
+              threads={threads}
+              currentThreadId={currentThreadId}
+              onThreadSelect={onThreadSelect}
+              onThreadCreate={onThreadCreate}
+              onThreadDelete={onThreadDelete}
+              onThreadRename={onThreadRename}
+              onThreadArchive={onThreadArchive}
+              onThreadUnarchive={onThreadUnarchive}
+              onBulkArchive={onBulkArchive}
+              onBulkUnarchive={onBulkUnarchive}
+            />
+          </TabsContent>
+
+          <TabsContent value="images" className="space-y-4 py-4">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-accent/10 rounded-full flex items-center justify-center">
+                <ImageIcon size={32} className="text-accent" weight="fill" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Image Tools</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Create, edit, and enhance images with AI-powered tools
+              </p>
+              <div className="flex flex-col gap-3 max-w-sm mx-auto">
+                <Button
+                  onClick={() => {
+                    setImageEditorMode("create")
+                    setImageToEdit(undefined)
+                    setImageEditorOpen(true)
+                  }}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2"
+                >
+                  <ImageIcon size={18} weight="fill" />
+                  Create New Image
+                </Button>
+                <Button
+                  onClick={() => {
+                    setImageEditorMode("edit")
+                    setImageToEdit(undefined)
+                    setImageEditorOpen(true)
+                  }}
+                  variant="outline"
+                  className="border-accent/50 text-accent hover:bg-accent/10 gap-2"
+                >
+                  <ImageIcon size={18} weight="fill" />
+                  Edit Image
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="stories" className="space-y-4 py-4">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <BookOpen size={32} className="text-primary" weight="fill" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Story Creator</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Create detailed stories with AI assistance and save them to chat
+              </p>
+              <Button
+                onClick={() => setStoryCreatorOpen(true)}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+              >
+                <BookOpen size={18} weight="fill" />
+                Create New Story
+              </Button>
+            </div>
+          </TabsContent>
         </Tabs>
       </DialogContent>
+
+      <ImageEditor
+        open={imageEditorOpen}
+        onClose={() => setImageEditorOpen(false)}
+        imageUrl={imageToEdit}
+        mode={imageEditorMode}
+        onSaveToChat={onImageSaveToChat}
+      />
+
+      <StoryCreator
+        open={storyCreatorOpen}
+        onClose={() => setStoryCreatorOpen(false)}
+        onSaveToChat={onStorySaveToChat}
+      />
     </Dialog>
+  )
+}
+
+interface ConversationsTabContentProps {
+  threads: ConversationThread[]
+  currentThreadId: string
+  onThreadSelect: (threadId: string) => void
+  onThreadCreate: (title: string) => void
+  onThreadDelete: (threadId: string) => void
+  onThreadRename: (threadId: string, newTitle: string) => void
+  onThreadArchive: (threadId: string) => void
+  onThreadUnarchive: (threadId: string) => void
+  onBulkArchive: (threadIds: string[]) => void
+  onBulkUnarchive: (threadIds: string[]) => void
+}
+
+function ConversationsTabContent({
+  threads,
+  currentThreadId,
+  onThreadSelect,
+  onThreadCreate,
+  onThreadDelete,
+  onThreadRename,
+  onThreadArchive,
+  onThreadUnarchive,
+  onBulkArchive,
+  onBulkUnarchive,
+}: ConversationsTabContentProps) {
+  const [newThreadTitle, setNewThreadTitle] = useState("")
+  const [editingThreadId, setEditingThreadId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState("")
+  const [showArchived, setShowArchived] = useState(false)
+  const [selectedThreads, setSelectedThreads] = useState<string[]>([])
+
+  const activeThreads = threads.filter(t => !t.archived)
+  const archivedThreads = threads.filter(t => t.archived)
+  const displayThreads = showArchived ? archivedThreads : activeThreads
+
+  const handleCreateThread = () => {
+    if (!newThreadTitle.trim()) {
+      toast.error("Thread title cannot be empty")
+      return
+    }
+    onThreadCreate(newThreadTitle.trim())
+    setNewThreadTitle("")
+  }
+
+  const handleRenameThread = (threadId: string) => {
+    if (!editingTitle.trim()) {
+      toast.error("Thread title cannot be empty")
+      return
+    }
+    onThreadRename(threadId, editingTitle.trim())
+    setEditingThreadId(null)
+    setEditingTitle("")
+  }
+
+  const toggleThreadSelection = (threadId: string) => {
+    setSelectedThreads(current =>
+      current.includes(threadId)
+        ? current.filter(id => id !== threadId)
+        : [...current, threadId]
+    )
+  }
+
+  const handleBulkAction = () => {
+    if (selectedThreads.length === 0) return
+    
+    if (showArchived) {
+      onBulkUnarchive(selectedThreads)
+      toast.success(`${selectedThreads.length} conversation${selectedThreads.length > 1 ? 's' : ''} restored`)
+    } else {
+      onBulkArchive(selectedThreads)
+      toast.success(`${selectedThreads.length} conversation${selectedThreads.length > 1 ? 's' : ''} archived`)
+    }
+    setSelectedThreads([])
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <Label>Create New Conversation</Label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="Enter conversation title..."
+            value={newThreadTitle}
+            onChange={(e) => setNewThreadTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleCreateThread()
+              }
+            }}
+            className="text-[15px]"
+          />
+          <Button
+            onClick={handleCreateThread}
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            <Chat size={18} weight="fill" />
+          </Button>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="flex items-center justify-between">
+        <Label>
+          {showArchived ? "Archived Conversations" : "Active Conversations"}
+          <Badge variant="secondary" className="ml-2 text-xs">
+            {displayThreads.length}
+          </Badge>
+        </Label>
+        <div className="flex items-center gap-2">
+          {selectedThreads.length > 0 && (
+            <Button
+              onClick={handleBulkAction}
+              size="sm"
+              variant="outline"
+              className="border-accent/50 text-accent hover:bg-accent/10"
+            >
+              {showArchived ? "Restore" : "Archive"} ({selectedThreads.length})
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              setShowArchived(!showArchived)
+              setSelectedThreads([])
+            }}
+            size="sm"
+            variant="outline"
+          >
+            {showArchived ? "Show Active" : "Show Archived"}
+          </Button>
+        </div>
+      </div>
+
+      {displayThreads.length > 0 ? (
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          <AnimatePresence>
+            {displayThreads.map((thread) => (
+              <motion.div
+                key={thread.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.25 }}
+                className={`flex items-center gap-3 p-3 rounded-lg group transition-colors ${
+                  thread.id === currentThreadId
+                    ? "bg-accent/20 border-2 border-accent"
+                    : "bg-muted/50 hover:bg-muted/70 border-2 border-transparent"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedThreads.includes(thread.id)}
+                  onChange={() => toggleThreadSelection(thread.id)}
+                  className="cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="text-accent">
+                  <Chat size={16} weight="fill" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  {editingThreadId === thread.id ? (
+                    <Input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleRenameThread(thread.id)
+                        } else if (e.key === "Escape") {
+                          setEditingThreadId(null)
+                          setEditingTitle("")
+                        }
+                      }}
+                      onBlur={() => handleRenameThread(thread.id)}
+                      className="text-sm h-7"
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium truncate">{thread.title}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {thread.messageCount} messages · {new Date(thread.lastUpdatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                {!showArchived && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onThreadSelect(thread.id)
+                      toast.success(`Switched to "${thread.title}"`)
+                    }}
+                  >
+                    Open
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditingThreadId(thread.id)
+                    setEditingTitle(thread.title)
+                  }}
+                >
+                  Rename
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (showArchived) {
+                      onThreadUnarchive(thread.id)
+                    } else {
+                      onThreadArchive(thread.id)
+                    }
+                  }}
+                >
+                  {showArchived ? "Restore" : "Archive"}
+                </Button>
+                {showArchived && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm(`Delete "${thread.title}" permanently?`)) {
+                        onThreadDelete(thread.id)
+                      }
+                    }}
+                  >
+                    <X size={16} />
+                  </Button>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-foreground">
+            {showArchived ? "No archived conversations" : "No active conversations"}
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
