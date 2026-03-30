@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Globe, GearSix, DotsThreeVertical } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -17,13 +17,6 @@ import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useVoiceInput } from "@/hooks/use-voice-input"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
 
 function App() {
   const isMobile = useIsMobile()
@@ -637,61 +630,13 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform gap-2"
-                    size="sm"
-                  >
-                    <DotsThreeVertical size={20} weight="bold" />
-                    <span className="hidden sm:inline">Menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem 
-                    onClick={() => setWebSearchEnabled(!webSearchEnabled)} 
-                    className="cursor-pointer flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Globe size={16} weight="fill" />
-                      <span>Web Search</span>
-                    </div>
-                    <div className={`text-xs px-2 py-0.5 rounded ${webSearchEnabled ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                      {webSearchEnabled ? 'ON' : 'OFF'}
-                    </div>
-                  </DropdownMenuItem>
-                  {currentUser && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => setSettingsOpen(true)} 
-                        className="cursor-pointer"
-                      >
-                        <GearSix size={16} weight="fill" className="mr-2" />
-                        Settings
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {currentMessages.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={exportAsText} className="cursor-pointer">
-                        <DownloadSimple size={16} weight="bold" className="mr-2" />
-                        Export as Text
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
-                        <DownloadSimple size={16} weight="bold" className="mr-2" />
-                        Export as JSON
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
               <UserAccount
                 currentUser={currentUser || null}
                 onLogin={handleLogin}
                 onLogout={handleLogout}
+                onOpenSettings={() => setSettingsOpen(true)}
+                webSearchEnabled={webSearchEnabled}
+                onToggleWebSearch={() => setWebSearchEnabled(!webSearchEnabled)}
               />
               {currentUser && (
                 <ProfileSettings

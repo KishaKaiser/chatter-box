@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useKV } from "@github/spark/hooks"
-import { SignIn, SignOut, User as UserIcon, Gear, CaretDown } from "@phosphor-icons/react"
+import { SignIn, SignOut, User as UserIcon, Gear, CaretDown, Globe } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -37,9 +37,11 @@ interface UserAccountProps {
   onLogin: (user: UserAccount) => void
   onLogout: () => void
   onOpenSettings?: () => void
+  webSearchEnabled?: boolean
+  onToggleWebSearch?: () => void
 }
 
-export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings }: UserAccountProps) {
+export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, webSearchEnabled, onToggleWebSearch }: UserAccountProps) {
   const [allAccounts, setAllAccounts] = useKV<UserAccount[]>("user-accounts", [])
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [username, setUsername] = useState("")
@@ -164,6 +166,23 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings }: 
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          {onToggleWebSearch && (
+            <>
+              <DropdownMenuItem 
+                onClick={onToggleWebSearch}
+                className="cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Globe size={16} weight="fill" />
+                  <span>Web Search</span>
+                </div>
+                <div className={`text-xs px-2 py-0.5 rounded ${webSearchEnabled ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                  {webSearchEnabled ? 'ON' : 'OFF'}
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           {onOpenSettings && (
             <>
               <DropdownMenuItem 
