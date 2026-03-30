@@ -36,28 +36,34 @@ const languageMap: Record<string, string> = {
   ts: "typescript",
   tsx: "tsx",
   py: "python",
+  python: "python",
   java: "java",
   cpp: "cpp",
   c: "c",
   h: "c",
   css: "css",
   html: "markup",
-  json: "json",
   xml: "markup",
+  json: "json",
   yaml: "yaml",
   yml: "yaml",
   go: "go",
   rs: "rust",
+  rust: "rust",
   rb: "ruby",
+  ruby: "ruby",
   php: "php",
   swift: "swift",
   kt: "kotlin",
+  kotlin: "kotlin",
   sh: "bash",
   bash: "bash",
   sql: "sql",
   vue: "markup",
-  r: "r",
-  cs: "csharp",
+  markdown: "markup",
+  md: "markup",
+  text: "plaintext",
+  txt: "plaintext",
 }
 
 export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
@@ -66,7 +72,18 @@ export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
 
   const detectLanguage = (): string => {
     if (language) {
-      return languageMap[language.toLowerCase()] || language.toLowerCase()
+      const normalizedLang = language.toLowerCase()
+      const mappedLang = languageMap[normalizedLang]
+      
+      if (mappedLang) {
+        return mappedLang
+      }
+      
+      if (Prism.languages[normalizedLang]) {
+        return normalizedLang
+      }
+      
+      return "plaintext"
     }
     
     if (fileName) {
@@ -80,8 +97,12 @@ export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
   const lang = detectLanguage()
 
   useEffect(() => {
-    if (codeRef.current && lang !== "plaintext") {
-      Prism.highlightElement(codeRef.current)
+    if (codeRef.current && lang !== "plaintext" && Prism.languages[lang]) {
+      try {
+        Prism.highlightElement(codeRef.current)
+      } catch (error) {
+        console.warn(`Failed to highlight code with language: ${lang}`, error)
+      }
     }
   }, [code, lang])
 
