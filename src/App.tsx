@@ -57,6 +57,38 @@ function App() {
     }
   }, [threads, currentThreadId, setThreads, setCurrentThreadId])
 
+  useEffect(() => {
+    const autoArchiveOldThreads = () => {
+      const now = Date.now()
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
+      
+      setThreads((current) => {
+        const threadList = current || []
+        const updated = threadList.map((thread) => {
+          if (!thread.archived && (now - thread.lastUpdatedAt) > thirtyDaysInMs) {
+            return { ...thread, archived: true }
+          }
+          return thread
+        })
+        
+        const archivedCount = updated.filter((t, i) => 
+          !threadList[i]?.archived && t.archived
+        ).length
+        
+        if (archivedCount > 0) {
+          toast.info(
+            `${archivedCount} conversation${archivedCount > 1 ? 's' : ''} automatically archived (older than 30 days)`,
+            { duration: 5000 }
+          )
+        }
+        
+        return updated
+      })
+    }
+
+    autoArchiveOldThreads()
+  }, [])
+
   const threadList = threads || []
   const activeThreads = threadList.filter(t => !t.archived)
   const activeThreadId = currentThreadId || activeThreads[0]?.id || ""
