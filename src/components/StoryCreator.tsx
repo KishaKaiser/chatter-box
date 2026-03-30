@@ -518,8 +518,8 @@ Return only the chapter content as plain text, no JSON formatting.`
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] p-0 flex flex-col">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-2xl flex items-center gap-2">
@@ -564,8 +564,8 @@ Return only the chapter content as plain text, no JSON formatting.`
           </div>
         </DialogHeader>
 
-        <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)} className="flex-1 flex flex-col">
-          <div className="px-6 pt-4">
+        <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="px-6 pt-4 shrink-0">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="saved" disabled={isGenerating}>
                 <FolderOpen size={16} weight="fill" className="mr-1" />
@@ -583,8 +583,8 @@ Return only the chapter content as plain text, no JSON formatting.`
             </TabsList>
           </div>
 
-          <ScrollArea className="flex-1 px-6">
-            <div className="py-6">
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="px-6 py-6">
               <TabsContent value="saved" className="mt-0 space-y-4">
                 {sortedSavedStories && sortedSavedStories.length > 0 ? (
                   <div className="space-y-3">
