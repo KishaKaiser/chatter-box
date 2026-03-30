@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,12 @@ import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useVoiceInput } from "@/hooks/use-voice-input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 function App() {
   const isMobile = useIsMobile()
@@ -136,6 +142,77 @@ Provide a helpful, conversational response. If the question relates to the uploa
     setKnowledgeFiles((current) => (current || []).filter((f) => f.id !== id))
   }
 
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp)
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  }
+
+  const exportAsText = () => {
+    if (!currentMessages.length) {
+      toast.error("No conversation to export")
+      return
+    }
+
+    let content = "Chatter Box - Conversation Export\n"
+    content += "=" + "=".repeat(50) + "\n\n"
+    
+    currentMessages.forEach((msg) => {
+      const role = msg.role === "user" ? "You" : "Chatter Box"
+      const timestamp = formatTimestamp(msg.timestamp)
+      content += `[${timestamp}] ${role}:\n${msg.content}\n\n`
+    })
+
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `chatter-box-export-${Date.now()}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success("Conversation exported successfully")
+  }
+
+  const exportAsJSON = () => {
+    if (!currentMessages.length) {
+      toast.error("No conversation to export")
+      return
+    }
+
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      messageCount: currentMessages.length,
+      messages: currentMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        formattedTimestamp: formatTimestamp(msg.timestamp)
+      }))
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `chatter-box-export-${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success("Conversation exported successfully")
+  }
+
   const currentMessages = messages || []
   const currentFiles = knowledgeFiles || []
 
@@ -152,18 +229,43 @@ Provide a helpful, conversational response. If the question relates to the uploa
       <Toaster position="top-center" />
       
       <div className="max-w-7xl mx-auto">
-        <header className="mb-6 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-            <div className="bg-gradient-to-br from-primary to-accent rounded-xl p-2">
-              <Sparkle size={28} weight="fill" className="text-primary-foreground" />
+        <header className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-primary to-accent rounded-xl p-2">
+                <Sparkle size={28} weight="fill" className="text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
+                  Chatter Box
+                </h1>
+                <p className="text-muted-foreground text-sm md:text-base">
+                  Your AI assistant that learns from your documents
+                </p>
+              </div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
-              Chatter Box
-            </h1>
+            {currentMessages.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform gap-2"
+                  >
+                    <DownloadSimple size={18} weight="bold" />
+                    <span className="hidden sm:inline">Export</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={exportAsText} className="cursor-pointer">
+                    Export as Text
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Your AI assistant that learns from your documents
-          </p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

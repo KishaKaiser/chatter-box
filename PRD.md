@@ -54,6 +54,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Progression: User asks question → Bot searches knowledge base → Finds relevant content → Generates answer with context
 - Success criteria: Bot correctly references uploaded content, cites sources when relevant, admits when it doesn't know
 
+**Conversation History Export**
+- Functionality: Download complete conversation history with timestamps in text or JSON format
+- Purpose: Enables users to save, share, and archive important conversations for future reference or documentation
+- Trigger: Click export button in header (only visible when messages exist)
+- Progression: Click export button → Select format (Text or JSON) → File downloads automatically → Success confirmation
+- Success criteria: Export includes all messages with accurate timestamps, proper formatting, and unique filenames
+
 ## Edge Case Handling
 - **Empty Chat State**: Display welcoming message with upload prompt when no files have been added yet
 - **Unsupported File Types**: Show error toast explaining which file types are supported (PDF, TXT, MD, PNG, JPG)
@@ -68,6 +75,8 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Noisy Environments**: Continue transcription despite background noise, allow manual editing of transcript
 - **Text-to-Speech Unsupported**: Hide speaker buttons if browser doesn't support Speech Synthesis API
 - **Multiple Messages Speaking**: Stop previous message when starting to speak a new one
+- **Empty Conversation Export**: Hide export button when no messages exist, show error if somehow triggered
+- **Long Conversations**: Handle exports of large message histories without performance issues
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -144,6 +153,7 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Voice input (active): `MicrophoneSlash` (Phosphor, filled, pulsing animation)
   - Text-to-speech (inactive): `SpeakerHigh` (Phosphor, filled, muted color)
   - Text-to-speech (active): `SpeakerSlash` (Phosphor, filled, cyan with pulse animation)
+  - Export: `DownloadSimple` (Phosphor, bold)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)
