@@ -23,7 +23,8 @@ import {
   Upload,
   ArrowClockwise,
   ArrowCounterClockwise as RotateLeft,
-  ArrowsClockwise as RotateRight
+  ArrowsClockwise as RotateRight,
+  ArrowsLeftRight
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
@@ -407,6 +408,13 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     toast.success(`Custom ratio ${width}:${height} applied`)
   }
 
+  const swapCustomRatio = () => {
+    const temp = customRatioWidth
+    setCustomRatioWidth(customRatioHeight)
+    setCustomRatioHeight(temp)
+    toast.success("Width and height swapped")
+  }
+
   const cancelCrop = () => {
     setIsCropping(false)
     setCropStart(null)
@@ -775,6 +783,16 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                               min="1"
                               step="1"
                             />
+                            <Button
+                              onClick={swapCustomRatio}
+                              disabled={!originalImage || isCropping || (!customRatioWidth && !customRatioHeight)}
+                              variant="ghost"
+                              size="sm"
+                              className="hover:bg-accent/10 hover:text-accent"
+                              title="Swap width and height"
+                            >
+                              <ArrowsLeftRight size={16} weight="bold" />
+                            </Button>
                             <Button
                               onClick={applyCustomRatio}
                               disabled={!originalImage || isCropping || !customRatioWidth || !customRatioHeight}
