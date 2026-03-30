@@ -44,6 +44,8 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
     { value: "minimalist", label: "Minimalist" },
     { value: "surrealism", label: "Surrealism" },
     { value: "vaporwave", label: "Vaporwave" },
+    { value: "cyberpunk", label: "Cyberpunk" },
+    { value: "steampunk", label: "Steampunk" },
   ]
 
   const aspectRatios = [
@@ -121,6 +123,8 @@ Visual Description:`
         "minimalist": ["#ffffff", "#f5f5f5", "#e0e0e0", "#333333", "#000000"],
         "surrealism": ["#2b1055", "#7597de", "#ffa500", "#ff1493", "#00ced1", "#9370db"],
         "vaporwave": ["#ff71ce", "#01cdfe", "#05ffa1", "#b967ff", "#fffb96", "#ff6c11"],
+        "cyberpunk": ["#0a0015", "#ff006e", "#00f0ff", "#7b2cbf", "#ff00ff", "#00ffff"],
+        "steampunk": ["#3d2817", "#8b6f47", "#d4a574", "#c87533", "#4a4a4a", "#b8860b"],
       }
 
       const colors = colorSchemes[style] || colorSchemes["realistic"]
@@ -754,6 +758,302 @@ Visual Description:`
           ctx.fillRect(x - size, y - size, size * 2, size * 2)
         }
         ctx.globalAlpha = 1.0
+      } else if (style === "cyberpunk") {
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, dimensions.height)
+        bgGradient.addColorStop(0, colors[0])
+        bgGradient.addColorStop(1, colors[3])
+        ctx.fillStyle = bgGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.globalAlpha = 0.3
+        for (let i = 0; i < 12; i++) {
+          const x = Math.random() * dimensions.width
+          const size = Math.random() * 150 + 100
+          const neonGradient = ctx.createRadialGradient(x, dimensions.height * 0.8, 0, x, dimensions.height * 0.8, size)
+          const neonColor = i % 2 === 0 ? colors[2] : colors[4]
+          neonGradient.addColorStop(0, neonColor)
+          neonGradient.addColorStop(1, 'transparent')
+          ctx.fillStyle = neonGradient
+          ctx.fillRect(x - size, dimensions.height * 0.5, size * 2, dimensions.height * 0.5)
+        }
+        ctx.globalAlpha = 1.0
+        
+        const buildingCount = 8
+        for (let i = 0; i < buildingCount; i++) {
+          const x = (dimensions.width / buildingCount) * i
+          const width = dimensions.width / buildingCount
+          const height = Math.random() * dimensions.height * 0.6 + dimensions.height * 0.2
+          const buildingY = dimensions.height - height
+          
+          const buildingGradient = ctx.createLinearGradient(x, buildingY, x, dimensions.height)
+          buildingGradient.addColorStop(0, colors[0])
+          buildingGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)')
+          ctx.fillStyle = buildingGradient
+          ctx.fillRect(x, buildingY, width - 4, height)
+          
+          ctx.strokeStyle = colors[1]
+          ctx.lineWidth = 2
+          ctx.strokeRect(x, buildingY, width - 4, height)
+          
+          const windowCols = 3
+          const windowRows = Math.floor(height / 30)
+          const windowWidth = (width - 4) / (windowCols + 1)
+          const windowHeight = 15
+          
+          for (let row = 0; row < windowRows; row++) {
+            for (let col = 0; col < windowCols; col++) {
+              const wx = x + windowWidth * (col + 0.5)
+              const wy = buildingY + 20 + row * 30
+              const isOn = Math.random() > 0.3
+              
+              if (isOn) {
+                const windowColor = Math.random() > 0.5 ? colors[2] : colors[5]
+                ctx.fillStyle = windowColor
+                ctx.globalAlpha = 0.8
+                ctx.fillRect(wx, wy, windowWidth * 0.6, windowHeight)
+                ctx.globalAlpha = 0.3
+                ctx.shadowBlur = 15
+                ctx.shadowColor = windowColor
+                ctx.fillRect(wx, wy, windowWidth * 0.6, windowHeight)
+                ctx.shadowBlur = 0
+              }
+            }
+          }
+          ctx.globalAlpha = 1.0
+        }
+        
+        ctx.strokeStyle = colors[1]
+        ctx.lineWidth = 3
+        ctx.globalAlpha = 0.7
+        for (let i = 0; i < 20; i++) {
+          const x1 = Math.random() * dimensions.width
+          const y1 = Math.random() * dimensions.height * 0.8
+          const x2 = Math.random() * dimensions.width
+          const y2 = Math.random() * dimensions.height * 0.8
+          ctx.beginPath()
+          ctx.moveTo(x1, y1)
+          ctx.lineTo(x2, y2)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const glitchCount = 15
+        for (let i = 0; i < glitchCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const glitchWidth = Math.random() * 100 + 20
+          const glitchHeight = Math.random() * 3 + 1
+          const glitchColor = Math.random() > 0.5 ? colors[1] : colors[4]
+          ctx.fillStyle = glitchColor
+          ctx.globalAlpha = 0.6
+          ctx.fillRect(x, y, glitchWidth, glitchHeight)
+        }
+        ctx.globalAlpha = 1.0
+        
+        ctx.fillStyle = colors[2]
+        ctx.globalAlpha = 0.15
+        ctx.font = `bold ${dimensions.height / 8}px monospace`
+        ctx.textAlign = 'center'
+        ctx.fillText('CYBER', dimensions.width / 2, dimensions.height * 0.4)
+        ctx.globalAlpha = 1.0
+      } else if (style === "steampunk") {
+        const bgGradient = ctx.createRadialGradient(
+          dimensions.width / 2, dimensions.height / 2, 0,
+          dimensions.width / 2, dimensions.height / 2, Math.max(dimensions.width, dimensions.height) * 0.7
+        )
+        bgGradient.addColorStop(0, colors[2])
+        bgGradient.addColorStop(0.5, colors[1])
+        bgGradient.addColorStop(1, colors[0])
+        ctx.fillStyle = bgGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.globalAlpha = 0.15
+        for (let x = 0; x < dimensions.width; x += 20) {
+          for (let y = 0; y < dimensions.height; y += 20) {
+            if (Math.random() > 0.5) {
+              ctx.fillStyle = colors[4]
+              ctx.fillRect(x, y, 2, 2)
+            }
+          }
+        }
+        ctx.globalAlpha = 1.0
+        
+        const gearCount = 8
+        for (let i = 0; i < gearCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const radius = Math.random() * 80 + 40
+          const teeth = 12
+          const gearColor = i % 2 === 0 ? colors[3] : colors[5]
+          
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(Math.random() * Math.PI * 2)
+          
+          const outerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius)
+          outerGradient.addColorStop(0, gearColor)
+          outerGradient.addColorStop(1, colors[0])
+          ctx.fillStyle = outerGradient
+          
+          ctx.beginPath()
+          for (let j = 0; j < teeth; j++) {
+            const angle = (j / teeth) * Math.PI * 2
+            const isOuter = j % 2 === 0
+            const r = isOuter ? radius : radius * 0.85
+            const px = Math.cos(angle) * r
+            const py = Math.sin(angle) * r
+            if (j === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
+          }
+          ctx.closePath()
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[4]
+          ctx.lineWidth = 3
+          ctx.stroke()
+          
+          ctx.fillStyle = colors[0]
+          ctx.beginPath()
+          ctx.arc(0, 0, radius * 0.4, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = colors[3]
+          ctx.lineWidth = 2
+          ctx.stroke()
+          
+          ctx.fillStyle = colors[1]
+          ctx.beginPath()
+          ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2)
+          ctx.fill()
+          
+          ctx.restore()
+        }
+        
+        const pipeCount = 6
+        for (let i = 0; i < pipeCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const length = Math.random() * 200 + 100
+          const angle = Math.random() * Math.PI * 2
+          const width = Math.random() * 20 + 10
+          
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(angle)
+          
+          const pipeGradient = ctx.createLinearGradient(0, -width / 2, 0, width / 2)
+          pipeGradient.addColorStop(0, colors[1])
+          pipeGradient.addColorStop(0.5, colors[3])
+          pipeGradient.addColorStop(1, colors[0])
+          ctx.fillStyle = pipeGradient
+          ctx.fillRect(0, -width / 2, length, width)
+          
+          ctx.strokeStyle = colors[4]
+          ctx.lineWidth = 2
+          ctx.strokeRect(0, -width / 2, length, width)
+          
+          for (let j = 0; j < 4; j++) {
+            const segmentX = (length / 4) * j
+            ctx.strokeStyle = colors[5]
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(segmentX, -width / 2)
+            ctx.lineTo(segmentX, width / 2)
+            ctx.stroke()
+          }
+          
+          ctx.restore()
+        }
+        
+        const rivetCount = 30
+        ctx.fillStyle = colors[4]
+        for (let i = 0; i < rivetCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 4 + 2
+          
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 1
+          ctx.stroke()
+        }
+        
+        ctx.globalAlpha = 0.6
+        for (let i = 0; i < 5; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 60 + 40
+          
+          const steamGradient = ctx.createRadialGradient(x, y, 0, x, y, size)
+          steamGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)')
+          steamGradient.addColorStop(1, 'rgba(200, 200, 200, 0)')
+          ctx.fillStyle = steamGradient
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+        
+        const clockX = dimensions.width * 0.75
+        const clockY = dimensions.height * 0.25
+        const clockRadius = Math.min(dimensions.width, dimensions.height) * 0.15
+        
+        const clockGradient = ctx.createRadialGradient(clockX, clockY, 0, clockX, clockY, clockRadius)
+        clockGradient.addColorStop(0, colors[2])
+        clockGradient.addColorStop(1, colors[1])
+        ctx.fillStyle = clockGradient
+        ctx.beginPath()
+        ctx.arc(clockX, clockY, clockRadius, 0, Math.PI * 2)
+        ctx.fill()
+        
+        ctx.strokeStyle = colors[5]
+        ctx.lineWidth = 4
+        ctx.stroke()
+        
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2 - Math.PI / 2
+          const x1 = clockX + Math.cos(angle) * clockRadius * 0.8
+          const y1 = clockY + Math.sin(angle) * clockRadius * 0.8
+          const x2 = clockX + Math.cos(angle) * clockRadius * 0.9
+          const y2 = clockY + Math.sin(angle) * clockRadius * 0.9
+          
+          ctx.strokeStyle = colors[4]
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.moveTo(x1, y1)
+          ctx.lineTo(x2, y2)
+          ctx.stroke()
+        }
+        
+        const hourAngle = (Math.random() * 12 / 12) * Math.PI * 2 - Math.PI / 2
+        const minuteAngle = (Math.random() * 60 / 60) * Math.PI * 2 - Math.PI / 2
+        
+        ctx.strokeStyle = colors[0]
+        ctx.lineWidth = 4
+        ctx.lineCap = 'round'
+        ctx.beginPath()
+        ctx.moveTo(clockX, clockY)
+        ctx.lineTo(
+          clockX + Math.cos(hourAngle) * clockRadius * 0.5,
+          clockY + Math.sin(hourAngle) * clockRadius * 0.5
+        )
+        ctx.stroke()
+        
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(clockX, clockY)
+        ctx.lineTo(
+          clockX + Math.cos(minuteAngle) * clockRadius * 0.7,
+          clockY + Math.sin(minuteAngle) * clockRadius * 0.7
+        )
+        ctx.stroke()
+        
+        ctx.fillStyle = colors[5]
+        ctx.beginPath()
+        ctx.arc(clockX, clockY, clockRadius * 0.08, 0, Math.PI * 2)
+        ctx.fill()
       } else {
         colors.forEach((color, i) => {
           gradient.addColorStop(i / (colors.length - 1), color)
