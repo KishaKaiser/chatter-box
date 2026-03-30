@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 
 export interface UserAccount {
@@ -21,6 +21,8 @@ export interface UserAccount {
   username: string
   email: string
   createdAt: number
+  displayName?: string
+  avatarUrl?: string
 }
 
 interface UserAccountProps {
@@ -130,15 +132,20 @@ export function UserAccount({ currentUser, onLogin, onLogout }: UserAccountProps
   }
 
   if (currentUser) {
+    const displayName = currentUser.displayName || currentUser.username
+    
     return (
       <div className="flex items-center gap-3">
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg">
           <Avatar className="h-7 w-7 bg-primary/20">
+            {currentUser.avatarUrl ? (
+              <AvatarImage src={currentUser.avatarUrl} alt={displayName} />
+            ) : null}
             <AvatarFallback className="bg-primary/20 text-primary text-xs font-medium">
-              {getUserInitials(currentUser.username)}
+              {getUserInitials(displayName)}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium">{currentUser.username}</span>
+          <span className="text-sm font-medium">{displayName}</span>
         </div>
         <Button
           onClick={handleLogout}

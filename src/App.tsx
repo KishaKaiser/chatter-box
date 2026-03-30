@@ -9,6 +9,7 @@ import { ChatMessage, Message } from "@/components/ChatMessage"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeBase, KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
+import { ProfileSettings } from "@/components/ProfileSettings"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -24,6 +25,7 @@ import {
 function App() {
   const isMobile = useIsMobile()
   const [currentUser, setCurrentUser] = useKV<UserAccountType | null>("current-user", null)
+  const [allAccounts, setAllAccounts] = useKV<UserAccountType[]>("user-accounts", [])
   const userKey = (currentUser?.id || "guest")
   const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}`, [])
   const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
@@ -224,6 +226,15 @@ Provide a helpful, conversational response. If the question relates to the uploa
     setCurrentUser(null)
   }
 
+  const handleUpdateProfile = (updatedUser: UserAccountType) => {
+    setCurrentUser(updatedUser)
+    setAllAccounts((current) => 
+      (current || []).map((acc) => 
+        acc.id === updatedUser.id ? updatedUser : acc
+      )
+    )
+  }
+
   const currentMessages = messages || []
   const currentFiles = knowledgeFiles || []
 
@@ -277,6 +288,12 @@ Provide a helpful, conversational response. If the question relates to the uploa
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              )}
+              {currentUser && (
+                <ProfileSettings
+                  currentUser={currentUser}
+                  onUpdateProfile={handleUpdateProfile}
+                />
               )}
               <UserAccount
                 currentUser={currentUser || null}
