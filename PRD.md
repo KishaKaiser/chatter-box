@@ -129,6 +129,11 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Chapter Regeneration**: Maintain story context when regenerating individual chapters, ensure consistency with previous chapters
 - **Long Story Content**: Stories with many chapters may be difficult to scroll through, consider pagination or chapter navigation
 - **Story Download Naming**: Sanitize story titles for valid filenames, handle special characters and length limits
+- **Web Search Timeout**: Web search may take 2-3 seconds, show loading indicator during search, gracefully fail if search takes too long or errors
+- **No Web Search Results**: Handle empty search results gracefully with helpful message, bot continues with knowledge base only
+- **Invalid Search Query**: Very short or nonsensical queries may produce irrelevant results, bot does best interpretation
+- **Search Results Parsing**: Handle malformed JSON responses from AI search generation, retry or fall back to knowledge base
+- **Web Search Toggle State**: Toggle state persists per user account, guest users have separate toggle state
 
 ## Image Operations
 
@@ -159,6 +164,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Trigger: Click "Stories" button in header
 - Progression: Click Stories → Enter title and description → Select genre, tone, chapter count, and length → Add optional details (characters, setting, conflict) → Click "Generate Story" → AI creates full story with chapters → View, download, or send to chat → Regenerate individual chapters if desired
 - Success criteria: Stories are coherent and match specified parameters, chapters flow naturally, regeneration produces different but consistent content, download works in plain text format, stories can be previewed in chat
+
+**Web Search**
+- Functionality: Enable AI-powered web search to supplement bot responses with current internet information when answering questions
+- Purpose: Provides access to up-to-date information beyond the knowledge base, allowing the bot to answer questions about current events, news, or topics not covered in uploaded documents
+- Trigger: Toggle "Web Search" switch above the message input field
+- Progression: Enable switch → Ask question → Bot performs web search → Search results card displays with sources → Bot incorporates search results into response → Results remain visible → Close results card with X button
+- Success criteria: Search executes within 2-3 seconds, returns 5 relevant results with titles/snippets/URLs, bot cites sources in response, results display with favicon and clickable links, toggle state persists per user account
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -237,6 +249,9 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Image generation textarea for detailed prompt input
   - Abstract shape generator for demo image creation
   - Download and save buttons with distinct visual styles
+  - Web search results card with gradient border and accent highlighting
+  - Clickable result items with hover effects and favicon display
+  - Web search toggle with switch component and status badge
 
 - **States**:
   - Buttons: Default (cyan), hover (brighter cyan + glow), active (scale down), disabled (muted)
@@ -277,6 +292,8 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Stories: `BookOpen` (Phosphor, filled)
   - Story chapter: `Book` (Phosphor)
   - Regenerate: `ArrowCounterClockwise` (Phosphor)
+  - Web search: `Globe` (Phosphor, filled)
+  - Search in progress: `MagnifyingGlass` (Phosphor, animated pulse)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)

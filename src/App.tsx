@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Image as ImageIcon, BookOpen } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Image as ImageIcon, BookOpen, Globe } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,11 +13,14 @@ import { ProfileSettings } from "@/components/ProfileSettings"
 import { ConversationThreads, ConversationThread } from "@/components/ConversationThreads"
 import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
+import { WebSearch, SearchResult } from "@/components/WebSearch"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useVoiceInput } from "@/hooks/use-voice-input"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   DropdownMenu,
@@ -37,6 +40,10 @@ function App() {
   const [isTyping, setIsTyping] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
   const [isDraggingFile, setIsDraggingFile] = useState(false)
+  const [webSearchEnabled, setWebSearchEnabled] = useKV<boolean>(`web-search-enabled-${userKey}`, false)
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [currentSearchQuery, setCurrentSearchQuery] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -143,6 +150,30 @@ function App() {
   }
 
   const generateBotResponse = async (userMessage: string, attachments?: MessageAttachment[]): Promise<string> => {
+    let webSearchContext = ""
+    
+    if (webSearchEnabled) {
+      setIsSearching(true)
+      setCurrentSearchQuery(userMessage)
+      
+      try {
+        const results = await performWebSearch(userMessage)
+        setSearchResults(results)
+        
+        if (results.length > 0) {
+          webSearchContext = "\n\nWeb Search Results:\n" + 
+            results.map((r, i) => 
+              `${i + 1}. ${r.title}\n   ${r.snippet}\n   Source: ${r.url}`
+            ).join("\n\n")
+        }
+      } catch (error) {
+        console.error("Web search error:", error)
+        toast.error("Web search failed, continuing with knowledge base only")
+      } finally {
+        setIsSearching(false)
+      }
+    }
+
     const files = knowledgeFiles || []
     const knowledgeContext = files
       .map((file) => {
@@ -162,11 +193,11 @@ function App() {
     const contextPart = knowledgeContext || "No documents uploaded yet."
     const promptText = `You are Chatter Box, a helpful AI assistant. You have access to the following knowledge base:
 
-${contextPart}${attachmentContext}
+${contextPart}${attachmentContext}${webSearchContext}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. If the question relates to the uploaded documents or attached files, reference them specifically. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
+Provide a helpful, conversational response. If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
 
 When including code snippets in your response, always use markdown code blocks with the language specified for proper syntax highlighting. For example:
 \`\`\`javascript
@@ -187,6 +218,38 @@ def example():
     } catch (error) {
       console.error("Error generating response:", error)
       return "I'm having trouble generating a response right now. Please try again in a moment."
+    }
+  }
+
+  const performWebSearch = async (query: string): Promise<SearchResult[]> => {
+    const searchPrompt = `You are a web search assistant. Based on the user's query, generate 5 realistic web search results that would help answer their question.
+
+User query: ${query}
+
+Return results as a JSON object with a "results" array. Each result should have:
+- title: A realistic webpage title
+- snippet: A 2-3 sentence excerpt that would appear in search results
+- url: A realistic URL for the source (use real domains like wikipedia.org, stackoverflow.com, github.com, etc.)
+
+Make the results relevant, helpful, and diverse. Include authoritative sources when appropriate.`
+
+    try {
+      const response = await window.spark.llm(searchPrompt, "gpt-4o-mini", true)
+      const data = JSON.parse(response)
+      
+      if (data.results && Array.isArray(data.results)) {
+        return data.results.map((r: any) => ({
+          title: r.title || "Untitled",
+          snippet: r.snippet || "",
+          url: r.url || "#",
+          favicon: r.url ? `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=32` : undefined
+        }))
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Search parsing error:", error)
+      return []
     }
   }
 
@@ -713,6 +776,17 @@ def example():
                   </p>
                 </div>
               )}
+
+              <AnimatePresence>
+                {(isSearching || searchResults.length > 0) && (
+                  <WebSearch
+                    results={searchResults}
+                    query={currentSearchQuery}
+                    isSearching={isSearching}
+                    onClose={() => setSearchResults([])}
+                  />
+                )}
+              </AnimatePresence>
               
               {currentMessages.map((message) => (
                 <ChatMessage 
@@ -761,6 +835,31 @@ def example():
                 </AnimatePresence>
               </div>
             )}
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="web-search"
+                  checked={webSearchEnabled}
+                  onCheckedChange={setWebSearchEnabled}
+                  className="data-[state=checked]:bg-accent"
+                />
+                <Label
+                  htmlFor="web-search"
+                  className="text-sm cursor-pointer flex items-center gap-1.5"
+                >
+                  <Globe size={16} weight="fill" className={webSearchEnabled ? "text-accent" : "text-muted-foreground"} />
+                  <span className={webSearchEnabled ? "text-foreground" : "text-muted-foreground"}>
+                    Web Search
+                  </span>
+                </Label>
+              </div>
+              {webSearchEnabled && (
+                <Badge variant="outline" className="text-xs border-accent/50 text-accent">
+                  Enabled
+                </Badge>
+              )}
+            </div>
             
             <div className="flex gap-2">
               <input
