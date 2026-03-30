@@ -97,12 +97,21 @@ export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
   const lang = detectLanguage()
 
   useEffect(() => {
-    if (codeRef.current && lang !== "plaintext" && Prism.languages[lang]) {
-      try {
-        Prism.highlightElement(codeRef.current)
-      } catch (error) {
-        console.warn(`Failed to highlight code with language: ${lang}`, error)
+    if (codeRef.current && lang !== "plaintext") {
+      const grammar = Prism.languages[lang]
+      if (grammar) {
+        try {
+          const highlighted = Prism.highlight(code, grammar, lang)
+          codeRef.current.innerHTML = highlighted
+        } catch (error) {
+          console.warn(`Failed to highlight code with language: ${lang}`, error)
+          codeRef.current.textContent = code
+        }
+      } else {
+        codeRef.current.textContent = code
       }
+    } else if (codeRef.current) {
+      codeRef.current.textContent = code
     }
   }, [code, lang])
 
