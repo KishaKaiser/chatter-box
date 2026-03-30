@@ -24,7 +24,8 @@ import {
   ArrowClockwise,
   ArrowCounterClockwise as RotateLeft,
   ArrowsClockwise as RotateRight,
-  ArrowsLeftRight
+  ArrowsLeftRight,
+  Palette
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
@@ -57,6 +58,76 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
   const [customRatioWidth, setCustomRatioWidth] = useState("")
   const [customRatioHeight, setCustomRatioHeight] = useState("")
+  const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const [filterIntensity, setFilterIntensity] = useState(100)
+
+  type FilterPreset = {
+    name: string
+    brightness: number
+    contrast: number
+    saturation: number
+    hueRotate?: number
+    sepia?: number
+    grayscale?: number
+  }
+
+  const filterPresets: Record<string, FilterPreset> = {
+    sepia: {
+      name: "Sepia",
+      brightness: 100,
+      contrast: 100,
+      saturation: 80,
+      sepia: 100,
+    },
+    grayscale: {
+      name: "Grayscale",
+      brightness: 100,
+      contrast: 100,
+      saturation: 0,
+      grayscale: 100,
+    },
+    vintage: {
+      name: "Vintage",
+      brightness: 110,
+      contrast: 95,
+      saturation: 75,
+      sepia: 40,
+      hueRotate: 10,
+    },
+    cool: {
+      name: "Cool",
+      brightness: 105,
+      contrast: 110,
+      saturation: 90,
+      hueRotate: 180,
+    },
+    warm: {
+      name: "Warm",
+      brightness: 110,
+      contrast: 105,
+      saturation: 110,
+      hueRotate: -10,
+    },
+    dramatic: {
+      name: "Dramatic",
+      brightness: 90,
+      contrast: 140,
+      saturation: 120,
+    },
+    fade: {
+      name: "Fade",
+      brightness: 115,
+      contrast: 85,
+      saturation: 70,
+    },
+    blackAndWhite: {
+      name: "B&W High Contrast",
+      brightness: 110,
+      contrast: 150,
+      saturation: 0,
+      grayscale: 100,
+    },
+  }
 
   useEffect(() => {
     if (open && imageUrl && mode === "edit") {
@@ -76,7 +147,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     if (originalImage && mode === "edit") {
       drawImage(originalImage)
     }
-  }, [brightness, contrast, saturation, blur, rotation])
+  }, [brightness, contrast, saturation, blur, rotation, activeFilter, filterIntensity])
 
   const resetCanvas = () => {
     const canvas = canvasRef.current
@@ -106,7 +177,24 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     ctx.rotate((rotation * Math.PI) / 180)
     ctx.translate(-canvas.width / 2, -canvas.height / 2)
 
-    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px)`
+    let filterString = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px)`
+
+    if (activeFilter && filterPresets[activeFilter]) {
+      const preset = filterPresets[activeFilter]
+      const intensity = filterIntensity / 100
+
+      if (preset.sepia) {
+        filterString += ` sepia(${preset.sepia * intensity}%)`
+      }
+      if (preset.grayscale) {
+        filterString += ` grayscale(${preset.grayscale * intensity}%)`
+      }
+      if (preset.hueRotate) {
+        filterString += ` hue-rotate(${preset.hueRotate * intensity}deg)`
+      }
+    }
+
+    ctx.filter = filterString
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
     ctx.restore()
   }
@@ -117,10 +205,44 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setSaturation(100)
     setBlur(0)
     setRotation(0)
+    setActiveFilter(null)
+    setFilterIntensity(100)
     if (originalImage) {
       drawImage(originalImage)
     }
     toast.success("Filters reset")
+  }
+
+  const applyFilter = (filterKey: string) => {
+    if (!originalImage) {
+      toast.error("No image loaded")
+      return
+    }
+
+    const preset = filterPresets[filterKey]
+    if (!preset) return
+
+    setBrightness(preset.brightness)
+    setContrast(preset.contrast)
+    setSaturation(preset.saturation)
+    setActiveFilter(filterKey)
+    setFilterIntensity(100)
+
+    toast.success(`${preset.name} filter applied`)
+  }
+
+  const clearFilter = () => {
+    setBrightness(100)
+    setContrast(100)
+    setSaturation(100)
+    setActiveFilter(null)
+    setFilterIntensity(100)
+    
+    if (originalImage) {
+      drawImage(originalImage)
+    }
+    
+    toast.success("Filter removed")
   }
 
   const handleDownload = () => {
@@ -818,7 +940,113 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                     </div>
 
                     <div className="space-y-4">
-                      <Label className="text-base font-semibold">Adjustments</Label>
+                      <div className="space-y-3">
+                        <Label className="text-base font-semibold flex items-center gap-2">
+                          <Palette size={18} className="text-accent" weight="fill" />
+                          Filter Presets
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => applyFilter("sepia")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "sepia" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "sepia" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Sepia
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("grayscale")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "grayscale" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "grayscale" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Grayscale
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("vintage")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "vintage" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "vintage" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Vintage
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("cool")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "cool" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "cool" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Cool
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("warm")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "warm" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "warm" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Warm
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("dramatic")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "dramatic" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "dramatic" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Dramatic
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("fade")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "fade" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "fade" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            Fade
+                          </Button>
+                          <Button
+                            onClick={() => applyFilter("blackAndWhite")}
+                            disabled={!originalImage || isCropping}
+                            variant={activeFilter === "blackAndWhite" ? "default" : "outline"}
+                            size="sm"
+                            className={activeFilter === "blackAndWhite" ? "bg-accent text-accent-foreground" : ""}
+                          >
+                            B&W High
+                          </Button>
+                        </div>
+                        {activeFilter && (
+                          <div className="space-y-2 pt-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm">Filter Intensity</Label>
+                              <Badge variant="secondary">{filterIntensity}%</Badge>
+                            </div>
+                            <Slider
+                              value={[filterIntensity]}
+                              onValueChange={([value]) => setFilterIntensity(value)}
+                              min={0}
+                              max={100}
+                              step={1}
+                              className="cursor-pointer"
+                            />
+                            <Button
+                              onClick={clearFilter}
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-xs"
+                            >
+                              <Eraser size={14} className="mr-1" weight="bold" />
+                              Clear Filter
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      <Label className="text-base font-semibold">Manual Adjustments</Label>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <Label className="flex items-center gap-2">
