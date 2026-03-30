@@ -1,0 +1,401 @@
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Image, Sparkle, DownloadSimple, PaperPlaneRight } from "@phosphor-icons/react"
+import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
+
+export interface TextToImageProps {
+  onSaveToChat?: (imageDataUrl: string) => void
+}
+
+export function TextToImage({ onSaveToChat }: TextToImageProps) {
+  const [prompt, setPrompt] = useState("")
+  const [negativePrompt, setNegativePrompt] = useState("")
+  const [style, setStyle] = useState("realistic")
+  const [aspectRatio, setAspectRatio] = useState("1:1")
+  const [quality, setQuality] = useState([75])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [generationHistory, setGenerationHistory] = useState<Array<{ prompt: string; image: string }>>([])
+
+  const styles = [
+    { value: "realistic", label: "Realistic" },
+    { value: "artistic", label: "Artistic" },
+    { value: "anime", label: "Anime" },
+    { value: "digital-art", label: "Digital Art" },
+    { value: "oil-painting", label: "Oil Painting" },
+    { value: "watercolor", label: "Watercolor" },
+    { value: "sketch", label: "Sketch" },
+    { value: "3d-render", label: "3D Render" },
+    { value: "pixel-art", label: "Pixel Art" },
+    { value: "fantasy", label: "Fantasy" },
+    { value: "sci-fi", label: "Sci-Fi" },
+    { value: "cinematic", label: "Cinematic" },
+  ]
+
+  const aspectRatios = [
+    { value: "1:1", label: "Square (1:1)" },
+    { value: "16:9", label: "Landscape (16:9)" },
+    { value: "9:16", label: "Portrait (9:16)" },
+    { value: "4:3", label: "Standard (4:3)" },
+    { value: "3:4", label: "Portrait (3:4)" },
+    { value: "21:9", label: "Ultrawide (21:9)" },
+  ]
+
+  const getDimensions = (ratio: string) => {
+    const ratioMap: Record<string, { width: number; height: number }> = {
+      "1:1": { width: 512, height: 512 },
+      "16:9": { width: 768, height: 432 },
+      "9:16": { width: 432, height: 768 },
+      "4:3": { width: 640, height: 480 },
+      "3:4": { width: 480, height: 640 },
+      "21:9": { width: 896, height: 384 },
+    }
+    return ratioMap[ratio] || { width: 512, height: 512 }
+  }
+
+  const generateImage = async () => {
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt")
+      return
+    }
+
+    setIsGenerating(true)
+
+    try {
+      const dimensions = getDimensions(aspectRatio)
+      const styleModifier = styles.find(s => s.value === style)?.label || "realistic"
+      
+      const enhancedPrompt = `Create a detailed visual description for: ${prompt}. Style: ${styleModifier}. ${negativePrompt ? `Avoid: ${negativePrompt}.` : ""} Quality level: ${quality[0]}%. Dimensions: ${dimensions.width}x${dimensions.height}.`
+
+      const promptText = `You are an expert image description generator. Based on the following request, create a vivid, detailed visual description that could be used to generate an image. Be specific about colors, lighting, composition, textures, mood, and style. Return ONLY the visual description, no preambles or explanations.
+
+Request: ${enhancedPrompt}
+
+Visual Description:`
+
+      const description = await window.spark.llm(promptText, "gpt-4o")
+
+      const canvas = document.createElement('canvas')
+      canvas.width = dimensions.width
+      canvas.height = dimensions.height
+      const ctx = canvas.getContext('2d')
+
+      if (!ctx) {
+        throw new Error("Canvas context not available")
+      }
+
+      const gradient = ctx.createLinearGradient(0, 0, dimensions.width, dimensions.height)
+      
+      const colorSchemes: Record<string, string[]> = {
+        "realistic": ["#1a1a2e", "#16213e", "#0f3460", "#533483"],
+        "artistic": ["#ff6b6b", "#4ecdc4", "#ffe66d", "#a8dadc"],
+        "anime": ["#ff9ff3", "#feca57", "#48dbfb", "#ff6348"],
+        "digital-art": ["#00d2ff", "#3a47d5", "#f093fb", "#4facfe"],
+        "oil-painting": ["#8b4513", "#daa520", "#556b2f", "#8b0000"],
+        "watercolor": ["#a8e6cf", "#dcedc1", "#ffd3b6", "#ffaaa5"],
+        "sketch": ["#2c3e50", "#95a5a6", "#bdc3c7", "#ecf0f1"],
+        "3d-render": ["#667eea", "#764ba2", "#f093fb", "#4facfe"],
+        "pixel-art": ["#ff0080", "#00ffff", "#ffff00", "#00ff00"],
+        "fantasy": ["#9d50bb", "#6e48aa", "#fc466b", "#3f5efb"],
+        "sci-fi": ["#00f260", "#0575e6", "#4776e6", "#8e54e9"],
+        "cinematic": ["#1c1c1c", "#2d4263", "#c84b31", "#ecdbba"],
+      }
+
+      const colors = colorSchemes[style] || colorSchemes["realistic"]
+      colors.forEach((color, i) => {
+        gradient.addColorStop(i / (colors.length - 1), color)
+      })
+
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
+      for (let i = 0; i < 50; i++) {
+        const x = Math.random() * dimensions.width
+        const y = Math.random() * dimensions.height
+        const size = Math.random() * 100 + 20
+        ctx.beginPath()
+        ctx.arc(x, y, size, 0, Math.PI * 2)
+        ctx.fill()
+      }
+
+      ctx.font = `bold ${Math.min(dimensions.width, dimensions.height) / 20}px 'Space Grotesk', sans-serif`
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      
+      const words = description.split(' ').slice(0, 15)
+      const lines: string[] = []
+      let currentLine = ''
+      
+      words.forEach((word: string) => {
+        const testLine = currentLine + word + ' '
+        const metrics = ctx.measureText(testLine)
+        if (metrics.width > dimensions.width * 0.8 && currentLine !== '') {
+          lines.push(currentLine.trim())
+          currentLine = word + ' '
+        } else {
+          currentLine = testLine
+        }
+      })
+      if (currentLine) lines.push(currentLine.trim())
+
+      const lineHeight = Math.min(dimensions.width, dimensions.height) / 15
+      const startY = (dimensions.height - (lines.length * lineHeight)) / 2
+
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
+      ctx.shadowBlur = 10
+      ctx.shadowOffsetX = 2
+      ctx.shadowOffsetY = 2
+
+      lines.forEach((line, i) => {
+        ctx.fillText(line, dimensions.width / 2, startY + (i * lineHeight))
+      })
+
+      ctx.shadowColor = 'transparent'
+      ctx.shadowBlur = 0
+      
+      ctx.font = `${Math.min(dimensions.width, dimensions.height) / 30}px 'Space Grotesk', sans-serif`
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
+      ctx.fillText(`${styleModifier} Style`, dimensions.width / 2, dimensions.height - 30)
+
+      const imageDataUrl = canvas.toDataURL('image/png')
+      setGeneratedImage(imageDataUrl)
+      
+      setGenerationHistory(prev => [
+        { prompt, image: imageDataUrl },
+        ...prev.slice(0, 9)
+      ])
+
+      toast.success("Image generated successfully!")
+    } catch (error) {
+      console.error("Error generating image:", error)
+      toast.error("Failed to generate image. Please try again.")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const downloadImage = () => {
+    if (!generatedImage) return
+
+    const link = document.createElement('a')
+    link.href = generatedImage
+    link.download = `chatterbox-generated-${Date.now()}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success("Image downloaded!")
+  }
+
+  const sendToChat = () => {
+    if (!generatedImage || !onSaveToChat) return
+    onSaveToChat(generatedImage)
+    toast.success("Image sent to chat!")
+  }
+
+  const loadFromHistory = (image: string, historyPrompt: string) => {
+    setGeneratedImage(image)
+    setPrompt(historyPrompt)
+    toast.success("Loaded from history")
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Image size={24} weight="duotone" />
+            Text to Image Generator
+          </CardTitle>
+          <CardDescription>
+            Create images from text descriptions using AI
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="prompt">Prompt</Label>
+            <Textarea
+              id="prompt"
+              placeholder="Describe the image you want to create..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="negative-prompt">Negative Prompt (Optional)</Label>
+            <Textarea
+              id="negative-prompt"
+              placeholder="What to avoid in the image..."
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              rows={2}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="style">Style</Label>
+              <Select value={style} onValueChange={setStyle}>
+                <SelectTrigger id="style">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {styles.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
+              <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                <SelectTrigger id="aspect-ratio">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {aspectRatios.map((ar) => (
+                    <SelectItem key={ar.value} value={ar.value}>
+                      {ar.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quality">Quality: {quality[0]}%</Label>
+            <Slider
+              id="quality"
+              value={quality}
+              onValueChange={setQuality}
+              min={25}
+              max={100}
+              step={25}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Low</span>
+              <span>Medium</span>
+              <span>High</span>
+              <span>Ultra</span>
+            </div>
+          </div>
+
+          <Button
+            onClick={generateImage}
+            disabled={isGenerating || !prompt.trim()}
+            className="w-full"
+            size="lg"
+          >
+            {isGenerating ? (
+              <>
+                <Sparkle className="animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkle weight="fill" />
+                Generate Image
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <AnimatePresence>
+        {generatedImage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Generated Image</CardTitle>
+                <CardDescription>Your AI-generated image is ready</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="relative rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={generatedImage}
+                    alt="Generated"
+                    className="w-full h-auto"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={downloadImage}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <DownloadSimple weight="fill" />
+                    Download
+                  </Button>
+                  {onSaveToChat && (
+                    <Button
+                      onClick={sendToChat}
+                      className="flex-1"
+                    >
+                      <PaperPlaneRight weight="fill" />
+                      Send to Chat
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {generationHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generation History</CardTitle>
+            <CardDescription>Your recent generated images</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {generationHistory.map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="group relative cursor-pointer rounded-lg overflow-hidden bg-muted hover:ring-2 hover:ring-accent transition-all"
+                  onClick={() => loadFromHistory(item.image, item.prompt)}
+                >
+                  <img
+                    src={item.image}
+                    alt={`Generated ${index + 1}`}
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white text-xs text-center px-2 line-clamp-3">
+                      {item.prompt}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

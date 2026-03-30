@@ -134,6 +134,12 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Invalid Search Query**: Very short or nonsensical queries may produce irrelevant results, bot does best interpretation
 - **Search Results Parsing**: Handle malformed JSON responses from AI search generation, retry or fall back to knowledge base
 - **Web Search Toggle State**: Toggle state persists per user account, guest users have separate toggle state
+- **Text-to-Image Empty Prompt**: Require prompt input before generation, show validation error if field is empty
+- **Text-to-Image Generation Timeout**: Generation may take 3-5 seconds for complex prompts, show progress indicator with animated icon
+- **Text-to-Image AI Errors**: Handle LLM failures gracefully with helpful retry message, fall back to simpler generation if full AI unavailable
+- **Large Image Generation**: High quality images may be slower to generate and larger file size, warn users before ultra quality download
+- **Generation History Overflow**: Limit to last 10 generations to prevent performance issues, oldest entries automatically removed
+- **Image Send to Chat**: Ensure generated images attach correctly to messages and display in chat interface
 
 ## Image Operations
 
@@ -164,6 +170,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Trigger: Click "Stories" button in header
 - Progression: Click Stories → Enter title and description → Select genre, tone, chapter count, and length → Add optional details (characters, setting, conflict) → Click "Generate Story" → AI creates full story with chapters → View, download, or send to chat → Regenerate individual chapters if desired
 - Success criteria: Stories are coherent and match specified parameters, chapters flow naturally, regeneration produces different but consistent content, download works in plain text format, stories can be previewed in chat
+
+**Text-to-Image Generation**
+- Functionality: Generate artistic images from text descriptions with customizable style, aspect ratio, and quality settings
+- Purpose: Enables users to create unique visual content from imagination, perfect for creative projects, social media, or concept visualization
+- Trigger: Click user profile dropdown → Settings → Navigate to "AI Art" tab
+- Progression: Open AI Art tab → Enter detailed prompt in textarea → Optionally add negative prompt (what to avoid) → Select style (Realistic, Anime, Digital Art, Oil Painting, etc.) → Choose aspect ratio (1:1, 16:9, 9:16, etc.) → Adjust quality slider (Low to Ultra) → Click "Generate Image" → AI creates visual representation → Preview generated image → Download image or send directly to chat → View generation history with previous prompts
+- Success criteria: Images generate within 5 seconds, match selected style and aspect ratio, quality adjustment affects detail level, generated images can be downloaded as PNG files or attached to chat messages, generation history shows last 10 creations with clickable thumbnails to reload previous prompts
 
 **Web Search**
 - Functionality: Enable AI-powered web search to supplement bot responses with current internet information when answering questions

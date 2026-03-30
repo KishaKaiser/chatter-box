@@ -24,6 +24,7 @@ import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { ConversationThread } from "@/components/ConversationThreads"
 import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
+import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
 import { useKV } from "@github/spark/hooks"
 
@@ -260,7 +261,7 @@ export function ProfileSettings({
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 gap-1">
+          <TabsList className="grid w-full grid-cols-7 gap-1">
             <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
             <TabsTrigger value="voice" className="text-xs sm:text-sm">Voice</TabsTrigger>
             <TabsTrigger value="knowledge" className="text-xs sm:text-sm">
@@ -276,6 +277,7 @@ export function ProfileSettings({
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="images" className="text-xs sm:text-sm">Images</TabsTrigger>
+            <TabsTrigger value="text-to-image" className="text-xs sm:text-sm">AI Art</TabsTrigger>
             <TabsTrigger value="stories" className="text-xs sm:text-sm">Stories</TabsTrigger>
           </TabsList>
 
@@ -523,6 +525,10 @@ export function ProfileSettings({
                 </Button>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="text-to-image" className="py-4">
+            <TextToImage onSaveToChat={onImageSaveToChat} />
           </TabsContent>
 
           <TabsContent value="stories" className="space-y-4 py-4">
