@@ -115,6 +115,36 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Thread Metadata Accuracy**: Keep message counts and last updated timestamps accurate as messages are added
 - **Long Thread Lists**: Scroll thread list smoothly when many threads exist, sort by most recent activity
 - **Thread Archiving**: Archived threads hidden from active view but fully accessible via archived tab, archiving current thread switches to first available active thread, badge counters show active vs archived counts separately
+- **Image Editor Not Opening**: Clicking Images button should always open editor dialog, check for JavaScript errors
+- **Canvas Rendering Issues**: Images may not display if browser doesn't support HTML5 Canvas API, show fallback message
+- **Image Upload Failures**: Handle unsupported image formats gracefully, show clear error message for format restrictions
+- **Filter Performance**: Large images (>2MB) may cause slow filter updates, consider downscaling for preview
+- **AI Generation Placeholder**: Full AI image generation not yet available, demo creates abstract shapes, inform users this is coming soon
+- **Enhancement Accuracy**: AI enhancement uses simulated adjustments, not true AI vision, set appropriate expectations
+- **Multiple Tabs Open**: Only one image can be edited at a time, switching tabs preserves current work
+- **Download Compatibility**: Canvas toBlob may not work in older browsers, provide alternative download method
+
+**Image Operations**
+**Image Editing**
+- Functionality: Adjust images with real-time filters including brightness, contrast, saturation, blur, and rotation
+- Purpose: Enables users to perfect images before sharing, with professional-grade editing controls in a simple interface
+- Trigger: Click "Images" button in header, select "Edit" tab, and upload or load an image
+- Progression: Click Images button → Edit tab → Upload/load image → Adjust sliders (brightness, contrast, saturation, blur, rotation) → Preview updates in real-time → Download or save to chat
+- Success criteria: Filters apply smoothly in real-time, changes are reversible with reset button, edited images can be downloaded or saved back to chat
+
+**Image Generation**
+- Functionality: Create new images from text descriptions using AI-powered generation (demo mode with abstract visualizations)
+- Purpose: Allows users to generate visual content from imagination without needing design skills or external tools
+- Trigger: Click "Images" button, navigate to "Generate" tab
+- Progression: Click Images button → Generate tab → Enter description in textarea → Click "Generate Image" → AI creates abstract visualization → Preview on canvas → Download or save to chat
+- Success criteria: Text descriptions produce relevant abstract visualizations, generation completes within 3 seconds, results are downloadable
+
+**Image Enhancement**
+- Functionality: AI-powered automatic image improvements based on natural language instructions
+- Purpose: Provides intelligent one-click enhancements without manual adjustment, ideal for quick fixes
+- Trigger: Click "Images" button with existing image loaded, navigate to "Enhance" tab
+- Progression: Load image → Enhance tab → Describe desired enhancement (e.g., "make brighter and more vibrant") → Click "Enhance with AI" → AI adjusts filters automatically → Preview updated image → Download or save
+- Success criteria: Enhancement instructions produce appropriate filter adjustments, enhancements improve image quality, original can be restored with reset
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -170,6 +200,10 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - `CodeBlock` - Custom component with Prism.js for syntax highlighting with language detection and copy button
   - `Sheet` - Slide-out panel for conversation threads management
   - `AlertDialog` - Confirmation dialog for deleting threads
+  - `Dialog` - Full-screen modal for image editor with tabs
+  - `Tabs` - Switch between Edit, Generate, and Enhance modes in image editor
+  - `Slider` - Precise filter adjustments with real-time visual feedback and value badges
+  - `Canvas` - HTML5 Canvas for image rendering and manipulation with filter effects
 
 - **Customizations**:
   - Custom message bubbles (user: cyan accent, bot: muted purple card)
@@ -183,6 +217,12 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Thread creation input with instant create button
   - Tabbed interface for Active and Archived threads with count badges
   - Archive button appears on all threads with distinct visual state for archived items
+  - Image editor dialog with three-tab interface (Edit, Generate, Enhance)
+  - Canvas preview with muted background for image visibility
+  - Filter control panel with labeled sliders and real-time value badges
+  - Image generation textarea for detailed prompt input
+  - Abstract shape generator for demo image creation
+  - Download and save buttons with distinct visual styles
 
 - **States**:
   - Buttons: Default (cyan), hover (brighter cyan + glow), active (scale down), disabled (muted)
@@ -213,6 +253,13 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Edit thread: `PencilSimple` (Phosphor, bold)
   - Delete thread: `Trash` (Phosphor, bold)
   - Archive/Unarchive thread: `Archive` (Phosphor, bold)
+  - Images: `Image` (Phosphor, filled)
+  - Image edit: `PaintBrush` (Phosphor, filled)
+  - Image create: `Sparkle` (Phosphor, filled)
+  - Image enhance: `MagicWand` (Phosphor, filled)
+  - Brightness: `SunDim` (Phosphor)
+  - Reset filters: `ArrowCounterClockwise` (Phosphor)
+  - Save image: `FloppyDisk` (Phosphor, filled)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)

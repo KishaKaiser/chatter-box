@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Smiley, Image as ImageIcon } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { ProfileSettings } from "@/components/ProfileSettings"
 import { ConversationThreads, ConversationThread } from "@/components/ConversationThreads"
+import { ImageEditor } from "@/components/ImageEditor"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -39,6 +40,9 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const [imageEditorOpen, setImageEditorOpen] = useState(false)
+  const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("create")
+  const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     const threadList = threads || []
@@ -548,6 +552,20 @@ def example():
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setImageEditorMode("create")
+                  setImageToEdit(undefined)
+                  setImageEditorOpen(true)
+                }}
+                variant="outline"
+                className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform gap-2"
+                size="sm"
+                title="Image tools"
+              >
+                <ImageIcon size={18} weight="fill" />
+                <span className="hidden sm:inline">Images</span>
+              </Button>
               <ConversationThreads
                 threads={threadList}
                 currentThreadId={activeThreadId}
@@ -752,6 +770,13 @@ def example():
           </div>
         </Card>
       </div>
+
+      <ImageEditor
+        open={imageEditorOpen}
+        onClose={() => setImageEditorOpen(false)}
+        imageUrl={imageToEdit}
+        mode={imageEditorMode}
+      />
     </div>
   )
 }
