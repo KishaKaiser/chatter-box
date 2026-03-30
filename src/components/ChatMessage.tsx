@@ -1,6 +1,8 @@
-import { Robot, User } from "@phosphor-icons/react"
+import { Robot, User, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useTextToSpeech } from "@/hooks/use-text-to-speech"
 
 export type Message = {
   id: string
@@ -15,6 +17,8 @@ type ChatMessageProps = {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isBot = message.role === "bot"
+  const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
+  const isThisMessageSpeaking = isSpeaking && currentText === message.content
   
   return (
     <motion.div
@@ -37,7 +41,26 @@ export function ChatMessage({ message }: ChatMessageProps) {
               : "bg-accent text-accent-foreground rounded-tr-sm"
           }`}
         >
-          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+          <div className="flex items-start gap-2">
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words flex-1">
+              {message.content}
+            </p>
+            {isBot && isSupported && (
+              <Button
+                onClick={() => toggle(message.content)}
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 hover:bg-primary/10 active:scale-95 transition-transform"
+                title={isThisMessageSpeaking ? "Stop speaking" : "Read aloud"}
+              >
+                {isThisMessageSpeaking ? (
+                  <SpeakerSlash size={16} weight="fill" className="text-accent animate-pulse" />
+                ) : (
+                  <SpeakerHigh size={16} weight="fill" className="text-muted-foreground" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
         <span className="text-[13px] text-muted-foreground px-2">
           {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

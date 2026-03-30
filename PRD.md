@@ -33,6 +33,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Progression: Click mic → Permission granted → Speak message → Live transcription updates input field → Click mic again or wait → Message sent automatically
 - Success criteria: Speech accurately transcribed in real-time, visual feedback shows recording state, seamless send on completion, browser compatibility gracefully handled
 
+**Text-to-Speech for Bot Responses**
+- Functionality: Bot messages can be read aloud using speech synthesis with play/stop controls
+- Purpose: Enables hands-free consumption of responses, improves accessibility, creates more natural conversational experience
+- Trigger: Click speaker button on any bot message
+- Progression: Click speaker icon → Speech synthesis starts → Icon animates while speaking → Click again to stop → Returns to ready state
+- Success criteria: Natural-sounding voice reads full message, visual feedback shows speaking state, can stop mid-speech, works across browsers with Web Speech API support
+
 **Knowledge Base Display**
 - Functionality: Visual list showing all uploaded documents/images with ability to remove items
 - Purpose: Gives users visibility and control over what the bot has learned
@@ -59,6 +66,8 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Microphone Permissions**: Handle denied permissions gracefully with helpful message
 - **Voice Recognition Errors**: Display error feedback if speech recognition fails mid-recording
 - **Noisy Environments**: Continue transcription despite background noise, allow manual editing of transcript
+- **Text-to-Speech Unsupported**: Hide speaker buttons if browser doesn't support Speech Synthesis API
+- **Multiple Messages Speaking**: Stop previous message when starting to speak a new one
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -133,6 +142,8 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - File types: `File`, `FileImage`, `FilePdf` (Phosphor)
   - Voice input (inactive): `Microphone` (Phosphor, filled)
   - Voice input (active): `MicrophoneSlash` (Phosphor, filled, pulsing animation)
+  - Text-to-speech (inactive): `SpeakerHigh` (Phosphor, filled, muted color)
+  - Text-to-speech (active): `SpeakerSlash` (Phosphor, filled, cyan with pulse animation)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)
