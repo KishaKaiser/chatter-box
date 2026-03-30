@@ -53,6 +53,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
   const [cropStart, setCropStart] = useState<{ x: number; y: number } | null>(null)
   const [cropEnd, setCropEnd] = useState<{ x: number; y: number } | null>(null)
   const [cropRect, setCropRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
+  const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
 
   useEffect(() => {
     if (open && imageUrl && mode === "edit") {
@@ -371,7 +372,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     toast.success(`Rotated ${direction === "left" ? "left" : "right"} 90°`)
   }
 
-  const startCrop = () => {
+  const startCrop = (aspectRatio: number | null = null) => {
     if (!originalImage) {
       toast.error("No image to crop")
       return
@@ -380,7 +381,14 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setCropStart(null)
     setCropEnd(null)
     setCropRect(null)
-    toast.info("Click and drag on the image to select crop area")
+    setCropAspectRatio(aspectRatio)
+    
+    if (aspectRatio) {
+      const ratioText = aspectRatio === 1 ? "1:1" : aspectRatio === 4/3 ? "4:3" : "16:9"
+      toast.info(`Click and drag to select ${ratioText} crop area`)
+    } else {
+      toast.info("Click and drag to select crop area")
+    }
   }
 
   const cancelCrop = () => {
@@ -474,16 +482,36 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
 
     setCropEnd({ x, y })
 
-    const minX = Math.min(cropStart.x, x)
-    const minY = Math.min(cropStart.y, y)
-    const maxX = Math.max(cropStart.x, x)
-    const maxY = Math.max(cropStart.y, y)
+    let minX = Math.min(cropStart.x, x)
+    let minY = Math.min(cropStart.y, y)
+    let width = Math.abs(x - cropStart.x)
+    let height = Math.abs(y - cropStart.y)
+
+    if (cropAspectRatio) {
+      if (width / height > cropAspectRatio) {
+        width = height * cropAspectRatio
+      } else {
+        height = width / cropAspectRatio
+      }
+
+      if (x < cropStart.x) {
+        minX = cropStart.x - width
+      }
+      if (y < cropStart.y) {
+        minY = cropStart.y - height
+      }
+
+      minX = Math.max(0, Math.min(minX, canvas.width - width))
+      minY = Math.max(0, Math.min(minY, canvas.height - height))
+      width = Math.min(width, canvas.width - minX)
+      height = Math.min(height, canvas.height - minY)
+    }
 
     setCropRect({
       x: minX,
       y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
+      width,
+      height,
     })
   }
 
@@ -623,6 +651,11 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                         </div>
                         <p className="text-sm text-muted-foreground">
                           Click and drag on the image to select the area you want to keep.
+                          {cropAspectRatio && (
+                            <span className="block mt-1 text-accent font-medium">
+                              Aspect ratio: {cropAspectRatio === 1 ? "1:1" : cropAspectRatio === 4/3 ? "4:3" : "16:9"}
+                            </span>
+                          )}
                         </p>
                         <div className="flex gap-2">
                           <Button
@@ -647,31 +680,67 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
 
                     <div className="space-y-3">
                       <Label className="text-base font-semibold">Transform Tools</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          onClick={startCrop}
-                          disabled={!originalImage || isCropping}
-                          variant="outline"
-                          className="border-accent/50 text-accent hover:bg-accent/10"
-                          size="sm"
-                        >
-                          <Crop size={16} className="mr-2" weight="fill" />
-                          Crop
-                        </Button>
-                        <Button
-                          onClick={() => handleRotate90("left")}
-                          disabled={!originalImage || isCropping}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <RotateLeft size={16} className="mr-2" weight="bold" />
-                          90° Left
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => startCrop(null)}
+                            disabled={!originalImage || isCropping}
+                            variant="outline"
+                            className="border-accent/50 text-accent hover:bg-accent/10"
+                            size="sm"
+                          >
+                            <Crop size={16} className="mr-2" weight="fill" />
+                            Free Crop
+                          </Button>
+                          <Button
+                            onClick={() => handleRotate90("left")}
+                            disabled={!originalImage || isCropping}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <RotateLeft size={16} className="mr-2" weight="bold" />
+                            90° Left
+                          </Button>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Crop Presets</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Button
+                              onClick={() => startCrop(1)}
+                              disabled={!originalImage || isCropping}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              <Square size={14} className="mr-1" weight="fill" />
+                              1:1
+                            </Button>
+                            <Button
+                              onClick={() => startCrop(4/3)}
+                              disabled={!originalImage || isCropping}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              4:3
+                            </Button>
+                            <Button
+                              onClick={() => startCrop(16/9)}
+                              disabled={!originalImage || isCropping}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              16:9
+                            </Button>
+                          </div>
+                        </div>
                         <Button
                           onClick={() => handleRotate90("right")}
                           disabled={!originalImage || isCropping}
                           variant="outline"
                           size="sm"
+                          className="w-full"
                         >
                           <RotateRight size={16} className="mr-2" weight="bold" />
                           90° Right
