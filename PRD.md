@@ -61,6 +61,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Progression: Click export button → Select format (Text or JSON) → File downloads automatically → Success confirmation
 - Success criteria: Export includes all messages with accurate timestamps, proper formatting, and unique filenames
 
+**User Account Management**
+- Functionality: Create and login to user accounts where each user's data is stored separately
+- Purpose: Enables multiple users to have personalized experiences with their own conversations and knowledge bases
+- Trigger: Click login button in header
+- Progression: Click login → Choose signup or login → Enter credentials → Authenticate → Account created/logged in → User-specific data loads
+- Success criteria: Users can create accounts, login/logout, and their messages and knowledge files are isolated per user
+
 ## Edge Case Handling
 - **Empty Chat State**: Display welcoming message with upload prompt when no files have been added yet
 - **Unsupported File Types**: Show error toast explaining which file types are supported (PDF, TXT, MD, PNG, JPG)
@@ -77,6 +84,11 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Multiple Messages Speaking**: Stop previous message when starting to speak a new one
 - **Empty Conversation Export**: Hide export button when no messages exist, show error if somehow triggered
 - **Long Conversations**: Handle exports of large message histories without performance issues
+- **Account Creation Validation**: Validate username length (min 3 chars), email format, password strength (min 6 chars)
+- **Duplicate Accounts**: Prevent creating accounts with duplicate emails
+- **Account Not Found**: Show helpful error when attempting to login with non-existent account
+- **Guest Mode**: Allow users to use the app without logging in (data stored under "guest" key)
+- **User Data Isolation**: Ensure each user's messages and knowledge files are completely separate
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -154,6 +166,9 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - Text-to-speech (inactive): `SpeakerHigh` (Phosphor, filled, muted color)
   - Text-to-speech (active): `SpeakerSlash` (Phosphor, filled, cyan with pulse animation)
   - Export: `DownloadSimple` (Phosphor, bold)
+  - Login: `SignIn` (Phosphor, bold)
+  - Logout: `SignOut` (Phosphor, bold)
+  - User profile: `User` (Phosphor)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)

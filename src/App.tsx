@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChatMessage, Message } from "@/components/ChatMessage"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeBase, KnowledgeFile } from "@/components/KnowledgeBase"
+import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -22,8 +23,10 @@ import {
 
 function App() {
   const isMobile = useIsMobile()
-  const [messages, setMessages] = useKV<Message[]>("chat-messages", [])
-  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>("knowledge-files", [])
+  const [currentUser, setCurrentUser] = useKV<UserAccountType | null>("current-user", null)
+  const userKey = (currentUser?.id || "guest")
+  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}`, [])
+  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -213,6 +216,14 @@ Provide a helpful, conversational response. If the question relates to the uploa
     toast.success("Conversation exported successfully")
   }
 
+  const handleLogin = (user: UserAccountType) => {
+    setCurrentUser(user)
+  }
+
+  const handleLogout = () => {
+    setCurrentUser(null)
+  }
+
   const currentMessages = messages || []
   const currentFiles = knowledgeFiles || []
 
@@ -244,27 +255,35 @@ Provide a helpful, conversational response. If the question relates to the uploa
                 </p>
               </div>
             </div>
-            {currentMessages.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform gap-2"
-                  >
-                    <DownloadSimple size={18} weight="bold" />
-                    <span className="hidden sm:inline">Export</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={exportAsText} className="cursor-pointer">
-                    Export as Text
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
-                    Export as JSON
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <div className="flex items-center gap-2">
+              {currentMessages.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform gap-2"
+                      size="sm"
+                    >
+                      <DownloadSimple size={18} weight="bold" />
+                      <span className="hidden sm:inline">Export</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={exportAsText} className="cursor-pointer">
+                      Export as Text
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportAsJSON} className="cursor-pointer">
+                      Export as JSON
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              <UserAccount
+                currentUser={currentUser || null}
+                onLogin={handleLogin}
+                onLogout={handleLogout}
+              />
+            </div>
           </div>
         </header>
 
