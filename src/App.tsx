@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect, KeyboardEvent } from "react"
+import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ChatMessage, Message } from "@/components/ChatMessage"
+import { ChatMessage, Message, MessageAttachment } from "@/components/ChatMessage"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
@@ -14,6 +14,8 @@ import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useVoiceInput } from "@/hooks/use-voice-input"
+import { Badge } from "@/components/ui/badge"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +32,12 @@ function App() {
   const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
   
   const {
     isListening,
@@ -74,7 +80,7 @@ function App() {
     }
   }
 
-  const generateBotResponse = async (userMessage: string): Promise<string> => {
+  const generateBotResponse = async (userMessage: string, attachments?: MessageAttachment[]): Promise<string> => {
     const files = knowledgeFiles || []
     const knowledgeContext = files
       .map((file) => {
@@ -85,14 +91,20 @@ function App() {
       })
       .join("\n\n")
 
+    let attachmentContext = ""
+    if (attachments && attachments.length > 0) {
+      attachmentContext = "\n\nThe user has attached the following files to this message:\n" + 
+        attachments.map(att => `- ${att.name} (${att.type})`).join("\n")
+    }
+
     const contextPart = knowledgeContext || "No documents uploaded yet."
     const promptText = `You are Chatter Box, a helpful AI assistant. You have access to the following knowledge base:
 
-${contextPart}
+${contextPart}${attachmentContext}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. If the question relates to the uploaded documents, reference them specifically. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.`
+Provide a helpful, conversational response. If the question relates to the uploaded documents or attached files, reference them specifically. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.`
 
     try {
       const response = await window.spark.llm(promptText, "gpt-4o-mini")
@@ -104,20 +116,22 @@ Provide a helpful, conversational response. If the question relates to the uploa
   }
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isTyping) return
+    if ((!inputValue.trim() && pendingAttachments.length === 0) || isTyping) return
 
     const userMessage: Message = {
       id: `${Date.now()}-user`,
       role: "user",
-      content: inputValue.trim(),
+      content: inputValue.trim() || "(File attached)",
       timestamp: Date.now(),
+      attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined,
     }
 
     setMessages((current) => [...(current || []), userMessage])
     setInputValue("")
+    setPendingAttachments([])
     setIsTyping(true)
 
-    const botResponse = await generateBotResponse(userMessage.content)
+    const botResponse = await generateBotResponse(userMessage.content, userMessage.attachments)
 
     const botMessage: Message = {
       id: `${Date.now()}-bot`,
@@ -129,6 +143,69 @@ Provide a helpful, conversational response. If the question relates to the uploa
     setMessages((current) => [...(current || []), botMessage])
     setIsTyping(false)
     inputRef.current?.focus()
+  }
+
+  const handleFileSelect = async (selectedFiles: FileList | null) => {
+    if (!selectedFiles || selectedFiles.length === 0) return
+
+    const file = selectedFiles[0]
+    const supportedTypes = [
+      "text/plain",
+      "text/markdown",
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+    ]
+
+    if (!supportedTypes.some((type) => file.type.includes(type.split("/")[1]))) {
+      toast.error("Unsupported file type. Please upload PDF, TXT, MD, PNG, or JPG files.")
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB")
+      return
+    }
+
+    const attachment: MessageAttachment = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    }
+
+    setPendingAttachments((current) => [...current, attachment])
+    toast.success(`${file.name} attached`)
+  }
+
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const removeAttachment = (id: string) => {
+    setPendingAttachments((current) => current.filter((att) => att.id !== id))
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingFile(false)
+    handleFileSelect(e.dataTransfer.files)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingFile(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (e.currentTarget === chatContainerRef.current) {
+      setIsDraggingFile(false)
+    }
   }
 
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -298,7 +375,29 @@ Provide a helpful, conversational response. If the question relates to the uploa
           </div>
         </header>
 
-        <Card className="flex flex-col h-[calc(100vh-200px)] border-2">
+        <Card
+          ref={chatContainerRef}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className="flex flex-col h-[calc(100vh-200px)] border-2 relative"
+        >
+          {isDraggingFile && (
+            <div className="absolute inset-0 z-50 bg-accent/20 backdrop-blur-sm border-4 border-accent border-dashed rounded-lg flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-card p-8 rounded-2xl shadow-2xl border-2 border-accent"
+              >
+                <Paperclip size={48} className="text-accent mx-auto mb-3" weight="fill" />
+                <p className="text-lg font-semibold text-center">Drop file here</p>
+                <p className="text-sm text-muted-foreground text-center mt-1">
+                  PDF, TXT, MD, PNG, JPG (max 5MB)
+                </p>
+              </motion.div>
+            </div>
+          )}
+          
           <ScrollArea className="flex-1 p-6" ref={scrollRef}>
             <div className="space-y-4">
               {currentMessages.length === 0 && (
@@ -324,7 +423,58 @@ Provide a helpful, conversational response. If the question relates to the uploa
           </ScrollArea>
 
           <div className="p-4 border-t border-border">
+            {pendingAttachments.length > 0 && (
+              <div className="mb-3 space-y-2">
+                <AnimatePresence>
+                  {pendingAttachments.map((attachment) => (
+                    <motion.div
+                      key={attachment.id}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg group"
+                    >
+                      <Paperclip size={16} className="text-accent" weight="fill" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{attachment.name}</p>
+                        {attachment.size && (
+                          <p className="text-xs text-muted-foreground">
+                            {(attachment.size / 1024).toFixed(1)} KB
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeAttachment(attachment.id)}
+                      >
+                        <X size={14} />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+            
             <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".txt,.md,.pdf,.png,.jpg,.jpeg"
+                onChange={handleFileInputChange}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isTyping}
+                variant="outline"
+                className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"
+                size="icon"
+                title="Attach file"
+              >
+                <Paperclip size={20} weight="fill" />
+              </Button>
               <Input
                 ref={inputRef}
                 value={inputValue}
@@ -352,7 +502,7 @@ Provide a helpful, conversational response. If the question relates to the uploa
               </Button>
               <Button
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isTyping}
+                disabled={(!inputValue.trim() && pendingAttachments.length === 0) || isTyping}
                 className="bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 transition-transform"
                 size="icon"
               >

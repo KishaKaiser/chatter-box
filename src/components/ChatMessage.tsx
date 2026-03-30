@@ -1,14 +1,24 @@
-import { Robot, User, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react"
+import { Robot, User, SpeakerHigh, SpeakerSlash, FileImage, FilePdf, FileText, File as FileIcon } from "@phosphor-icons/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
+
+export type MessageAttachment = {
+  id: string
+  name: string
+  type: string
+  url?: string
+  size?: number
+}
 
 export type Message = {
   id: string
   role: "user" | "bot"
   content: string
   timestamp: number
+  attachments?: MessageAttachment[]
 }
 
 type ChatMessageProps = {
@@ -19,6 +29,21 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const isBot = message.role === "bot"
   const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
   const isThisMessageSpeaking = isSpeaking && currentText === message.content
+
+  const getFileIcon = (type: string) => {
+    if (type.includes("image")) return <FileImage size={16} weight="fill" />
+    if (type.includes("pdf")) return <FilePdf size={16} weight="fill" />
+    if (type.includes("text") || type.includes("markdown")) return <FileText size={16} weight="fill" />
+    return <FileIcon size={16} weight="fill" />
+  }
+
+  const getFileTypeLabel = (type: string): string => {
+    if (type.includes("image")) return "IMAGE"
+    if (type.includes("pdf")) return "PDF"
+    if (type.includes("text")) return "TXT"
+    if (type.includes("markdown")) return "MD"
+    return "FILE"
+  }
   
   return (
     <motion.div
@@ -33,7 +58,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         </AvatarFallback>
       </Avatar>
       
-      <div className={`flex flex-col gap-1 max-w-[75%] ${isBot ? "" : "items-end"}`}>
+      <div className={`flex flex-col gap-2 max-w-[75%] ${isBot ? "" : "items-end"}`}>
         <div
           className={`px-4 py-3 rounded-2xl ${
             isBot
@@ -61,6 +86,33 @@ export function ChatMessage({ message }: ChatMessageProps) {
               </Button>
             )}
           </div>
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mt-2 space-y-2">
+              {message.attachments.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg ${
+                    isBot ? "bg-background/50" : "bg-background/20"
+                  }`}
+                >
+                  <div className={isBot ? "text-primary" : "text-accent-foreground/70"}>
+                    {getFileIcon(attachment.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{attachment.name}</p>
+                    {attachment.size && (
+                      <p className="text-[11px] opacity-70">
+                        {(attachment.size / 1024).toFixed(1)} KB
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] h-5">
+                    {getFileTypeLabel(attachment.type)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <span className="text-[13px] text-muted-foreground px-2">
           {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
