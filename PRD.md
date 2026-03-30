@@ -62,11 +62,18 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Success criteria: Export includes all messages with accurate timestamps, proper formatting, and unique filenames
 
 **User Account Management**
-- Functionality: Create and login to user accounts where each user's data is stored separately
-- Purpose: Enables multiple users to have personalized experiences with their own conversations and knowledge bases
+- Functionality: Create and login to user accounts where each user's data is stored separately, with customizable names and personality settings
+- Purpose: Enables multiple users to have personalized experiences with their own conversations, knowledge bases, and chatbot behavior
 - Trigger: Click login button in header
-- Progression: Click login → Choose signup or login → Enter credentials → Authenticate → Account created/logged in → User-specific data loads
-- Success criteria: Users can create accounts, login/logout, and their messages and knowledge files are isolated per user
+- Progression: Click login → Choose signup or login → Enter credentials → Authenticate → Account created/logged in → User-specific data loads → Customize chatbot name, preferred name, and personality in settings
+- Success criteria: Users can create accounts, login/logout, their messages and knowledge files are isolated per user, and chatbot responds according to selected personality style
+
+**Personality Presets**
+- Functionality: Select from 12 pre-defined personality styles that change how the chatbot communicates (Friendly Assistant, Professional Expert, Creative Muse, Tech Guru, Patient Teacher, Witty Companion, Straight to the Point, Empathetic Listener, Curious Explorer, Motivational Coach, Academic Scholar, Casual Friend)
+- Purpose: Allows users to customize the chatbot's tone, style, and communication approach to match their needs and preferences
+- Trigger: Click settings → Navigate to Personality tab
+- Progression: Open settings → Personality tab → Browse preset cards with descriptions and traits → Click desired personality → Preview system prompt → Save changes → Bot immediately adopts new communication style in responses
+- Success criteria: Personality selection persists per user, bot responses clearly reflect selected style, smooth transition between personalities, visual feedback shows active selection
 
 **Code Syntax Highlighting**
 - Functionality: Automatically detects and highlights code blocks in chat messages with language-specific syntax coloring
@@ -103,6 +110,9 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Account Not Found**: Show helpful error when attempting to login with non-existent account
 - **Guest Mode**: Allow users to use the app without logging in (data stored under "guest" key)
 - **User Data Isolation**: Ensure each user's messages and knowledge files are completely separate
+- **Personality Preset Loading**: Default to "Friendly Assistant" if no personality is selected or invalid ID stored
+- **Personality Switching**: Apply new personality immediately to next bot response after save, no regeneration of previous messages
+- **Personality Persistence**: Save personality selection per user account, maintain across sessions
 - **ZIP File Handling**: ZIP archives are recognized but not extracted - bot references them as archives
 - **Code File Processing**: Code files (JS, TS, PY, etc.) are read as text and displayed with syntax awareness
 - **Multiple File Attachments**: Support attaching multiple files in messages and knowledge base

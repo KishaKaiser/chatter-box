@@ -1,5 +1,5 @@
 import { useState, useRef, ChangeEvent, useEffect } from "react"
-import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote } from "@phosphor-icons/react"
+import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote, Smiley } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +27,7 @@ import { StoryCreator } from "@/components/StoryCreator"
 import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
 import { useKV } from "@github/spark/hooks"
+import { PERSONALITY_PRESETS } from "@/lib/personality-presets"
 
 export interface CustomVoiceFile {
   id: string
@@ -99,6 +100,7 @@ export function ProfileSettings({
   const [preferredName, setPreferredName] = useState(currentUser.preferredName || "")
   const [chatbotName, setChatbotName] = useState(currentUser.chatbotName || "Chatter Box")
   const [selectedAvatar, setSelectedAvatar] = useState(currentUser.avatarUrl || "")
+  const [selectedPersonality, setSelectedPersonality] = useState(currentUser.personalityPreset || "default")
   const [customAvatarUrl, setCustomAvatarUrl] = useState("")
   const [isDragging, setIsDragging] = useState(false)
   const [imageEditorOpen, setImageEditorOpen] = useState(false)
@@ -132,6 +134,7 @@ export function ProfileSettings({
       preferredName: preferredName.trim() || undefined,
       chatbotName: chatbotName.trim(),
       avatarUrl: selectedAvatar || undefined,
+      personalityPreset: selectedPersonality,
     }
 
     onUpdateProfile(updatedUser)
@@ -278,8 +281,12 @@ export function ProfileSettings({
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 gap-1">
+          <TabsList className="grid w-full grid-cols-8 gap-1">
             <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
+            <TabsTrigger value="personality" className="text-xs sm:text-sm">
+              <Smiley size={16} weight="fill" className="sm:mr-1" />
+              <span className="hidden sm:inline">Personality</span>
+            </TabsTrigger>
             <TabsTrigger value="voice" className="text-xs sm:text-sm">Voice</TabsTrigger>
             <TabsTrigger value="knowledge" className="text-xs sm:text-sm">
               Knowledge
@@ -429,6 +436,93 @@ export function ProfileSettings({
             <div className="flex gap-3 pt-4">
               <Button
                 onClick={() => setOpen(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 transition-transform"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="personality" className="space-y-6 py-4">
+            <div className="space-y-4">
+              <div className="text-center pb-2">
+                <h3 className="text-lg font-semibold mb-1">Chatbot Personality</h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose how your AI assistant communicates and responds
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PERSONALITY_PRESETS.map((preset) => (
+                  <motion.button
+                    key={preset.id}
+                    onClick={() => setSelectedPersonality(preset.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`relative p-4 rounded-xl border-2 text-left transition-all ${
+                      selectedPersonality === preset.id
+                        ? "border-accent bg-accent/10 shadow-lg"
+                        : "border-border hover:border-accent/50 bg-card"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl flex-shrink-0">{preset.emoji}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm mb-1 flex items-center gap-2">
+                          {preset.name}
+                          {selectedPersonality === preset.id && (
+                            <Check size={16} weight="bold" className="text-accent flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {preset.description}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {preset.traits.map((trait, idx) => (
+                            <Badge
+                              key={idx}
+                              variant="secondary"
+                              className="text-xs px-2 py-0"
+                            >
+                              {trait}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {selectedPersonality === preset.id && (
+                      <motion.div
+                        layoutId="personality-selection"
+                        className="absolute inset-0 rounded-xl border-2 border-accent pointer-events-none"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                  <Smiley size={18} weight="fill" className="text-accent" />
+                  Current Selection: {PERSONALITY_PRESETS.find(p => p.id === selectedPersonality)?.name}
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  {PERSONALITY_PRESETS.find(p => p.id === selectedPersonality)?.systemPrompt}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={() => setIsOpen(false)}
                 variant="outline"
                 className="flex-1"
               >

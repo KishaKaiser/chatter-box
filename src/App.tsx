@@ -4,6 +4,7 @@ import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, 
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatMessage, Message, MessageAttachment } from "@/components/ChatMessage"
@@ -20,6 +21,7 @@ import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useVoiceInput } from "@/hooks/use-voice-input"
 import { motion, AnimatePresence } from "framer-motion"
+import { getPersonalityPrompt, PERSONALITY_PRESETS } from "@/lib/personality-presets"
 
 function App() {
   const isMobile = useIsMobile()
@@ -206,14 +208,17 @@ function App() {
     
     const botName = currentUser?.chatbotName || "Chatter Box"
     const userName = currentUser?.preferredName || currentUser?.displayName || currentUser?.username || "there"
+    const personalityPrompt = getPersonalityPrompt(currentUser?.personalityPreset)
     
-    const promptText = `You are ${botName}, a helpful AI assistant. When addressing the user, call them "${userName}". You have access to the following knowledge base:
+    const promptText = `You are ${botName}, a helpful AI assistant. ${personalityPrompt}
+
+When addressing the user, call them "${userName}". You have access to the following knowledge base:
 
 ${contextPart}${attachmentContext}${webSearchContext}${memoryPart}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. Address the user as "${userName}" occasionally in your responses to make it more personal. If the user has shared images with you, acknowledge them briefly and naturally (e.g., "Thanks for sharing the image!" or "I can see you've created an image"). If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
+Provide a helpful response that matches your personality style. Address the user as "${userName}" occasionally in your responses to make it more personal. If the user has shared images with you, acknowledge them briefly and naturally (e.g., "Thanks for sharing the image!" or "I can see you've created an image"). If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
 
 When including code snippets in your response, always use markdown code blocks with the language specified for proper syntax highlighting. For example:
 \`\`\`javascript
@@ -668,9 +673,19 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
                   {currentUser?.chatbotName || "Chatter Box"}
                 </h1>
-                <p className="text-muted-foreground text-sm md:text-base">
-                  Your AI assistant that learns from your documents
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-muted-foreground text-sm md:text-base">
+                    Your AI assistant that learns from your documents
+                  </p>
+                  {currentUser && (
+                    <Badge variant="secondary" className="text-xs hidden sm:flex items-center gap-1">
+                      {PERSONALITY_PRESETS.find(p => p.id === currentUser.personalityPreset)?.emoji || "😊"}
+                      <span className="hidden md:inline">
+                        {PERSONALITY_PRESETS.find(p => p.id === currentUser.personalityPreset)?.name || "Friendly Assistant"}
+                      </span>
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
