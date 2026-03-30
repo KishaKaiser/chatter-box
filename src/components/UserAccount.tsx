@@ -39,9 +39,11 @@ interface UserAccountProps {
   onOpenSettings?: () => void
   webSearchEnabled?: boolean
   onToggleWebSearch?: () => void
+  rememberWebSearch?: boolean
+  onToggleRememberWebSearch?: () => void
 }
 
-export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, webSearchEnabled, onToggleWebSearch }: UserAccountProps) {
+export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, webSearchEnabled, onToggleWebSearch, rememberWebSearch, onToggleRememberWebSearch }: UserAccountProps) {
   const [allAccounts, setAllAccounts] = useKV<UserAccount[]>("user-accounts", [])
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [username, setUsername] = useState("")
@@ -165,7 +167,7 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-56">
           {onToggleWebSearch && (
             <>
               <DropdownMenuItem 
@@ -180,6 +182,21 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
                   {webSearchEnabled ? 'ON' : 'OFF'}
                 </div>
               </DropdownMenuItem>
+              {onToggleRememberWebSearch && (
+                <DropdownMenuItem 
+                  onClick={onToggleRememberWebSearch}
+                  className="cursor-pointer flex items-center justify-between"
+                  disabled={!webSearchEnabled}
+                >
+                  <div className="flex items-center gap-2">
+                    <Globe size={16} weight="duotone" />
+                    <span className="text-sm">Remember Search Info</span>
+                  </div>
+                  <div className={`text-xs px-2 py-0.5 rounded ${rememberWebSearch ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                    {rememberWebSearch ? 'ON' : 'OFF'}
+                  </div>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
             </>
           )}

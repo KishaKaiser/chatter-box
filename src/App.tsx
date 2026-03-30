@@ -11,7 +11,6 @@ import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { ProfileSettings } from "@/components/ProfileSettings"
 import { ConversationThread } from "@/components/ConversationThreads"
-import { WebSearch, SearchResult } from "@/components/WebSearch"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -30,9 +29,9 @@ function App() {
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [webSearchEnabled, setWebSearchEnabled] = useKV<boolean>(`web-search-enabled-${userKey}`, false)
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [rememberWebSearch, setRememberWebSearch] = useKV<boolean>(`remember-web-search-${userKey}`, false)
+  const [webSearchMemory, setWebSearchMemory] = useKV<string>(`web-search-memory-${userKey}`, "")
   const [isSearching, setIsSearching] = useState(false)
-  const [currentSearchQuery, setCurrentSearchQuery] = useState("")
   const [settingsOpen, setSettingsOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -137,20 +136,27 @@ function App() {
 
   const generateBotResponse = async (userMessage: string, attachments?: MessageAttachment[]): Promise<string> => {
     let webSearchContext = ""
+    let citedSources = ""
     
     if (webSearchEnabled) {
       setIsSearching(true)
-      setCurrentSearchQuery(userMessage)
       
       try {
         const results = await performWebSearch(userMessage)
-        setSearchResults(results)
         
         if (results.length > 0) {
           webSearchContext = "\n\nWeb Search Results:\n" + 
             results.map((r, i) => 
               `${i + 1}. ${r.title}\n   ${r.snippet}\n   Source: ${r.url}`
             ).join("\n\n")
+          
+          citedSources = "\n\n---\n**Sources:**\n" + 
+            results.map((r, i) => `${i + 1}. [${r.title}](${r.url})`).join("\n")
+          
+          if (rememberWebSearch) {
+            const newMemoryEntry = `\n\n[${new Date().toLocaleDateString()}] Query: "${userMessage}"\nKey findings: ${results.map(r => r.snippet).join(' ')}`
+            setWebSearchMemory((current) => (current || "") + newMemoryEntry)
+          }
         }
       } catch (error) {
         console.error("Web search error:", error)
@@ -177,13 +183,15 @@ function App() {
     }
 
     const contextPart = knowledgeContext || "No documents uploaded yet."
+    const memoryPart = rememberWebSearch && webSearchMemory ? `\n\nPreviously learned from web searches:\n${webSearchMemory}` : ""
+    
     const promptText = `You are Chatter Box, a helpful AI assistant. You have access to the following knowledge base:
 
-${contextPart}${attachmentContext}${webSearchContext}
+${contextPart}${attachmentContext}${webSearchContext}${memoryPart}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
+Provide a helpful, conversational response. If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
 
 When including code snippets in your response, always use markdown code blocks with the language specified for proper syntax highlighting. For example:
 \`\`\`javascript
@@ -200,14 +208,14 @@ def example():
 
     try {
       const response = await window.spark.llm(promptText, "gpt-4o-mini")
-      return response
+      return response + citedSources
     } catch (error) {
       console.error("Error generating response:", error)
       return "I'm having trouble generating a response right now. Please try again in a moment."
     }
   }
 
-  const performWebSearch = async (query: string): Promise<SearchResult[]> => {
+  const performWebSearch = async (query: string): Promise<Array<{ title: string; snippet: string; url: string; favicon?: string }>> => {
     const searchPrompt = `You are a web search assistant. Based on the user's query, generate 5 realistic web search results that would help answer their question.
 
 User query: ${query}
@@ -642,6 +650,8 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                 onOpenSettings={() => setSettingsOpen(true)}
                 webSearchEnabled={webSearchEnabled}
                 onToggleWebSearch={() => setWebSearchEnabled(!webSearchEnabled)}
+                rememberWebSearch={rememberWebSearch}
+                onToggleRememberWebSearch={() => setRememberWebSearch(!rememberWebSearch)}
               />
               {currentUser && (
                 <ProfileSettings
@@ -719,17 +729,6 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   </p>
                 </div>
               )}
-
-              <AnimatePresence>
-                {(isSearching || searchResults.length > 0) && (
-                  <WebSearch
-                    results={searchResults}
-                    query={currentSearchQuery}
-                    isSearching={isSearching}
-                    onClose={() => setSearchResults([])}
-                  />
-                )}
-              </AnimatePresence>
               
               {currentMessages.map((message) => (
                 <ChatMessage 
