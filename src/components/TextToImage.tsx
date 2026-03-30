@@ -36,6 +36,9 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
     { value: "fantasy", label: "Fantasy" },
     { value: "sci-fi", label: "Sci-Fi" },
     { value: "cinematic", label: "Cinematic" },
+    { value: "abstract", label: "Abstract" },
+    { value: "impressionist", label: "Impressionist" },
+    { value: "comic-book", label: "Comic Book" },
   ]
 
   const aspectRatios = [
@@ -105,11 +108,177 @@ Visual Description:`
         "fantasy": ["#9d50bb", "#6e48aa", "#fc466b", "#3f5efb"],
         "sci-fi": ["#00f260", "#0575e6", "#4776e6", "#8e54e9"],
         "cinematic": ["#0a0a0a", "#1a1a1a", "#8b6914", "#d4af37", "#f4e4c1"],
+        "abstract": ["#ff006e", "#fb5607", "#ffbe0b", "#8338ec", "#3a86ff"],
+        "impressionist": ["#ffd6a5", "#ffadad", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff"],
+        "comic-book": ["#ff0000", "#0000ff", "#ffff00", "#000000", "#ffffff"],
       }
 
       const colors = colorSchemes[style] || colorSchemes["realistic"]
       
-      if (style === "watercolor") {
+      if (style === "abstract") {
+        const bg = ctx.createLinearGradient(0, 0, dimensions.width, dimensions.height)
+        bg.addColorStop(0, colors[0])
+        bg.addColorStop(1, colors[colors.length - 1])
+        ctx.fillStyle = bg
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        for (let i = 0; i < 25; i++) {
+          const colorIndex = Math.floor(Math.random() * colors.length)
+          ctx.fillStyle = colors[colorIndex]
+          ctx.globalAlpha = Math.random() * 0.6 + 0.3
+          
+          const shapeType = Math.floor(Math.random() * 4)
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 200 + 50
+          
+          if (shapeType === 0) {
+            ctx.beginPath()
+            ctx.arc(x, y, size, 0, Math.PI * 2)
+            ctx.fill()
+          } else if (shapeType === 1) {
+            ctx.fillRect(x - size / 2, y - size / 2, size, size)
+          } else if (shapeType === 2) {
+            ctx.beginPath()
+            ctx.moveTo(x, y - size)
+            ctx.lineTo(x + size, y + size)
+            ctx.lineTo(x - size, y + size)
+            ctx.closePath()
+            ctx.fill()
+          } else {
+            ctx.beginPath()
+            for (let j = 0; j < 6; j++) {
+              const angle = (j / 6) * Math.PI * 2
+              const px = x + Math.cos(angle) * size
+              const py = y + Math.sin(angle) * size
+              if (j === 0) ctx.moveTo(px, py)
+              else ctx.lineTo(px, py)
+            }
+            ctx.closePath()
+            ctx.fill()
+          }
+        }
+        
+        ctx.globalAlpha = 0.7
+        for (let i = 0; i < 15; i++) {
+          ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)]
+          ctx.lineWidth = Math.random() * 10 + 3
+          ctx.beginPath()
+          ctx.moveTo(Math.random() * dimensions.width, Math.random() * dimensions.height)
+          ctx.lineTo(Math.random() * dimensions.width, Math.random() * dimensions.height)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+      } else if (style === "impressionist") {
+        const gradient = ctx.createLinearGradient(0, 0, dimensions.width, dimensions.height)
+        colors.forEach((color, i) => {
+          gradient.addColorStop(i / (colors.length - 1), color)
+        })
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.globalAlpha = 0.4
+        for (let i = 0; i < 300; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const colorIndex = Math.floor(Math.random() * colors.length)
+          ctx.fillStyle = colors[colorIndex]
+          
+          const brushSize = Math.random() * 15 + 5
+          const angle = Math.random() * Math.PI * 2
+          
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(angle)
+          ctx.fillRect(-brushSize / 2, -brushSize / 4, brushSize, brushSize / 2)
+          ctx.restore()
+        }
+        
+        ctx.globalAlpha = 0.3
+        for (let i = 0; i < 150; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const colorIndex = Math.floor(Math.random() * colors.length)
+          ctx.fillStyle = colors[colorIndex]
+          const dotSize = Math.random() * 8 + 2
+          ctx.beginPath()
+          ctx.arc(x, y, dotSize, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+      } else if (style === "comic-book") {
+        ctx.fillStyle = colors[4]
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        const gradient = ctx.createRadialGradient(
+          dimensions.width / 2, dimensions.height / 2, 0,
+          dimensions.width / 2, dimensions.height / 2, Math.max(dimensions.width, dimensions.height) / 2
+        )
+        gradient.addColorStop(0, colors[2])
+        gradient.addColorStop(0.7, colors[1])
+        gradient.addColorStop(1, colors[0])
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        ctx.strokeStyle = colors[3]
+        ctx.lineWidth = 4
+        for (let i = 0; i < 8; i++) {
+          const startX = (dimensions.width / 8) * i
+          ctx.beginPath()
+          ctx.moveTo(startX, 0)
+          ctx.lineTo(startX + dimensions.width / 4, dimensions.height)
+          ctx.stroke()
+        }
+        
+        ctx.fillStyle = colors[3]
+        ctx.globalAlpha = 0.15
+        for (let i = 0; i < 40; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 6 + 2
+          ctx.fillRect(x, y, size, size)
+        }
+        ctx.globalAlpha = 1.0
+        
+        ctx.strokeStyle = colors[3]
+        ctx.lineWidth = 3
+        ctx.setLineDash([10, 5])
+        for (let i = 0; i < 5; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 100 + 50
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+        ctx.setLineDash([])
+        
+        const starCount = 12
+        for (let i = 0; i < starCount; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height
+          const size = Math.random() * 20 + 10
+          const spikes = 4
+          const outerRadius = size
+          const innerRadius = size / 2
+          
+          ctx.fillStyle = colors[2]
+          ctx.beginPath()
+          for (let j = 0; j < spikes * 2; j++) {
+            const angle = (j * Math.PI) / spikes - Math.PI / 2
+            const radius = j % 2 === 0 ? outerRadius : innerRadius
+            const px = x + Math.cos(angle) * radius
+            const py = y + Math.sin(angle) * radius
+            if (j === 0) ctx.moveTo(px, py)
+            else ctx.lineTo(px, py)
+          }
+          ctx.closePath()
+          ctx.fill()
+          ctx.strokeStyle = colors[3]
+          ctx.lineWidth = 2
+          ctx.stroke()
+        }
+      } else if (style === "watercolor") {
         const radialGradient = ctx.createRadialGradient(
           dimensions.width / 2, dimensions.height / 2, 0,
           dimensions.width / 2, dimensions.height / 2, Math.max(dimensions.width, dimensions.height) / 2
