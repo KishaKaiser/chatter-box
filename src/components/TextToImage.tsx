@@ -42,6 +42,8 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
     { value: "pop-art", label: "Pop Art" },
     { value: "graffiti", label: "Graffiti" },
     { value: "minimalist", label: "Minimalist" },
+    { value: "surrealism", label: "Surrealism" },
+    { value: "vaporwave", label: "Vaporwave" },
   ]
 
   const aspectRatios = [
@@ -117,6 +119,8 @@ Visual Description:`
         "pop-art": ["#ff1493", "#00ffff", "#ffff00", "#ff4500", "#00ff00"],
         "graffiti": ["#ff0066", "#00ff99", "#ffcc00", "#9933ff", "#ff6600"],
         "minimalist": ["#ffffff", "#f5f5f5", "#e0e0e0", "#333333", "#000000"],
+        "surrealism": ["#2b1055", "#7597de", "#ffa500", "#ff1493", "#00ced1", "#9370db"],
+        "vaporwave": ["#ff71ce", "#01cdfe", "#05ffa1", "#b967ff", "#fffb96", "#ff6c11"],
       }
 
       const colors = colorSchemes[style] || colorSchemes["realistic"]
@@ -536,6 +540,220 @@ Visual Description:`
         ctx.lineTo(dimensions.width * 0.9, dimensions.height * 0.7)
         ctx.stroke()
         ctx.setLineDash([])
+      } else if (style === "surrealism") {
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, dimensions.height * 0.6)
+        skyGradient.addColorStop(0, colors[0])
+        skyGradient.addColorStop(1, colors[1])
+        ctx.fillStyle = skyGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        const groundGradient = ctx.createLinearGradient(0, dimensions.height * 0.6, 0, dimensions.height)
+        groundGradient.addColorStop(0, colors[2])
+        groundGradient.addColorStop(1, colors[3])
+        ctx.fillStyle = groundGradient
+        ctx.fillRect(0, dimensions.height * 0.6, dimensions.width, dimensions.height * 0.4)
+        
+        ctx.globalAlpha = 0.7
+        const moonGradient = ctx.createRadialGradient(
+          dimensions.width * 0.75, dimensions.height * 0.25, 0,
+          dimensions.width * 0.75, dimensions.height * 0.25, dimensions.width * 0.15
+        )
+        moonGradient.addColorStop(0, colors[2])
+        moonGradient.addColorStop(0.6, colors[4])
+        moonGradient.addColorStop(1, 'transparent')
+        ctx.fillStyle = moonGradient
+        ctx.beginPath()
+        ctx.arc(dimensions.width * 0.75, dimensions.height * 0.25, dimensions.width * 0.15, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1.0
+        
+        for (let i = 0; i < 8; i++) {
+          const x = Math.random() * dimensions.width
+          const y = dimensions.height * 0.6 + Math.random() * dimensions.height * 0.4
+          const width = Math.random() * 60 + 30
+          const height = Math.random() * 150 + 100
+          
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate((Math.random() - 0.5) * 0.3)
+          
+          const objGradient = ctx.createLinearGradient(-width / 2, -height, width / 2, 0)
+          objGradient.addColorStop(0, colors[5])
+          objGradient.addColorStop(1, colors[3])
+          ctx.fillStyle = objGradient
+          
+          ctx.beginPath()
+          ctx.ellipse(0, -height / 2, width / 2, height / 2, 0, 0, Math.PI * 2)
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 2
+          ctx.globalAlpha = 0.5
+          ctx.stroke()
+          ctx.globalAlpha = 1.0
+          
+          ctx.restore()
+        }
+        
+        ctx.globalAlpha = 0.3
+        for (let i = 0; i < 30; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height * 0.5
+          const size = Math.random() * 4 + 2
+          ctx.fillStyle = colors[4]
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1.0
+        
+        for (let i = 0; i < 5; i++) {
+          const x = dimensions.width * 0.2 + Math.random() * dimensions.width * 0.6
+          const y = dimensions.height * 0.3 + Math.random() * dimensions.height * 0.3
+          const eyeWidth = Math.random() * 60 + 40
+          const eyeHeight = eyeWidth * 0.6
+          
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.ellipse(x, y, eyeWidth, eyeHeight, 0, 0, Math.PI * 2)
+          ctx.fill()
+          
+          ctx.strokeStyle = colors[0]
+          ctx.lineWidth = 3
+          ctx.stroke()
+          
+          const irisSize = eyeHeight * 0.7
+          ctx.fillStyle = colors[4]
+          ctx.beginPath()
+          ctx.arc(x, y, irisSize, 0, Math.PI * 2)
+          ctx.fill()
+          
+          const pupilSize = irisSize * 0.5
+          ctx.fillStyle = '#000000'
+          ctx.beginPath()
+          ctx.arc(x, y, pupilSize, 0, Math.PI * 2)
+          ctx.fill()
+          
+          const glintSize = pupilSize * 0.4
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.arc(x - pupilSize * 0.3, y - pupilSize * 0.3, glintSize, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      } else if (style === "vaporwave") {
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, dimensions.height)
+        skyGradient.addColorStop(0, '#1a0033')
+        skyGradient.addColorStop(0.3, '#330066')
+        skyGradient.addColorStop(0.6, colors[3])
+        skyGradient.addColorStop(1, colors[0])
+        ctx.fillStyle = skyGradient
+        ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+        
+        const sunSize = Math.min(dimensions.width, dimensions.height) * 0.25
+        const sunX = dimensions.width / 2
+        const sunY = dimensions.height * 0.4
+        
+        for (let i = 10; i > 0; i--) {
+          const size = sunSize * (1 + i * 0.1)
+          const alpha = 0.15 - i * 0.01
+          ctx.fillStyle = `rgba(255, 113, 206, ${alpha})`
+          ctx.beginPath()
+          ctx.arc(sunX, sunY, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        
+        const sunGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunSize)
+        sunGradient.addColorStop(0, colors[4])
+        sunGradient.addColorStop(0.5, colors[2])
+        sunGradient.addColorStop(1, colors[0])
+        ctx.fillStyle = sunGradient
+        ctx.beginPath()
+        ctx.arc(sunX, sunY, sunSize, 0, Math.PI * 2)
+        ctx.fill()
+        
+        const lineSpacing = 10
+        ctx.strokeStyle = colors[0]
+        ctx.lineWidth = 3
+        ctx.globalAlpha = 0.8
+        for (let i = 0; i <= sunSize * 2; i += lineSpacing) {
+          const yPos = sunY - sunSize + i
+          if (yPos > sunY - sunSize && yPos < sunY + sunSize) {
+            const angleOffset = Math.asin((yPos - sunY) / sunSize)
+            const xOffset = Math.cos(angleOffset) * sunSize
+            ctx.beginPath()
+            ctx.moveTo(sunX - xOffset, yPos)
+            ctx.lineTo(sunX + xOffset, yPos)
+            ctx.stroke()
+          }
+        }
+        ctx.globalAlpha = 1.0
+        
+        const gridStartY = dimensions.height * 0.55
+        const gridHeight = dimensions.height * 0.45
+        const perspective = dimensions.height * 0.3
+        
+        ctx.strokeStyle = colors[3]
+        ctx.lineWidth = 2
+        ctx.globalAlpha = 0.6
+        
+        const horizontalLines = 20
+        for (let i = 0; i <= horizontalLines; i++) {
+          const y = gridStartY + (i / horizontalLines) * gridHeight
+          const scale = (y - gridStartY) / gridHeight
+          const width = dimensions.width * (0.3 + scale * 0.7)
+          const x1 = dimensions.width / 2 - width / 2
+          const x2 = dimensions.width / 2 + width / 2
+          
+          ctx.beginPath()
+          ctx.moveTo(x1, y)
+          ctx.lineTo(x2, y)
+          ctx.stroke()
+        }
+        
+        const verticalLines = 15
+        for (let i = 0; i <= verticalLines; i++) {
+          const x = dimensions.width * (i / verticalLines)
+          
+          ctx.beginPath()
+          ctx.moveTo(x, gridStartY)
+          
+          const vanishX = dimensions.width / 2
+          const vanishY = gridStartY - perspective
+          const dx = x - vanishX
+          const extendFactor = 2
+          const endX = vanishX + dx * extendFactor
+          
+          ctx.lineTo(endX, dimensions.height)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 1.0
+        
+        for (let i = 0; i < 15; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height * 0.5
+          const size = Math.random() * 3 + 1
+          ctx.fillStyle = colors[1]
+          ctx.shadowBlur = 10
+          ctx.shadowColor = colors[1]
+          ctx.beginPath()
+          ctx.arc(x, y, size, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.shadowBlur = 0
+        
+        ctx.globalAlpha = 0.3
+        for (let i = 0; i < 5; i++) {
+          const x = Math.random() * dimensions.width
+          const y = Math.random() * dimensions.height * 0.4
+          const size = Math.random() * 100 + 50
+          
+          const palmGradient = ctx.createRadialGradient(x, y, 0, x, y, size)
+          palmGradient.addColorStop(0, colors[5])
+          palmGradient.addColorStop(1, 'transparent')
+          ctx.fillStyle = palmGradient
+          ctx.fillRect(x - size, y - size, size * 2, size * 2)
+        }
+        ctx.globalAlpha = 1.0
       } else {
         colors.forEach((color, i) => {
           gradient.addColorStop(i / (colors.length - 1), color)
