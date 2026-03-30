@@ -1,5 +1,5 @@
 import { useState, useRef, ChangeEvent, useEffect } from "react"
-import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh } from "@phosphor-icons/react"
+import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +27,14 @@ import { StoryCreator } from "@/components/StoryCreator"
 import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
 import { useKV } from "@github/spark/hooks"
+
+export interface CustomVoiceFile {
+  id: string
+  name: string
+  audioDataUrl: string
+  uploadedAt: number
+  duration?: number
+}
 
 interface ProfileSettingsProps {
   currentUser: UserAccount
@@ -581,10 +589,15 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
     pitch: 1.0,
     volume: 1.0,
   })
+  const [customVoiceFiles, setCustomVoiceFiles] = useKV<CustomVoiceFile[]>(`custom-voice-files-${userKey}`, [])
   const [testText, setTestText] = useState("Hello, I am your AI assistant. This is how I sound.")
   const [isTesting, setIsTesting] = useState(false)
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
+  const voiceFileInputRef = useRef<HTMLInputElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const settings = voiceSettings || { rate: 1.0, pitch: 1.0, volume: 1.0 }
+  const voiceFiles = customVoiceFiles || []
 
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -641,6 +654,105 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
       volume: 1.0,
     })
     toast.success("Voice settings reset to defaults")
+  }
+
+  const handleVoiceFileUpload = async (selectedFiles: FileList | null) => {
+    if (!selectedFiles || selectedFiles.length === 0) return
+
+    const file = selectedFiles[0]
+    const fileName = file.name.toLowerCase()
+    
+    const supportedExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac']
+    const isSupported = supportedExtensions.some(ext => fileName.endsWith(ext))
+
+    if (!isSupported) {
+      toast.error("Unsupported audio format. Please upload MP3, WAV, OGG, M4A, or AAC files.")
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Audio file must be less than 5MB")
+      return
+    }
+
+    try {
+      const reader = new FileReader()
+      const audioDataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = (e) => resolve(e.target?.result as string)
+        reader.onerror = () => reject(new Error("Failed to read file"))
+        reader.readAsDataURL(file)
+      })
+
+      const audio = new Audio(audioDataUrl)
+      const duration = await new Promise<number>((resolve) => {
+        audio.onloadedmetadata = () => resolve(audio.duration)
+        audio.onerror = () => resolve(0)
+      })
+
+      const newVoiceFile: CustomVoiceFile = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        name: file.name,
+        audioDataUrl,
+        uploadedAt: Date.now(),
+        duration: Math.round(duration),
+      }
+
+      setCustomVoiceFiles((current) => [...(current || []), newVoiceFile])
+      toast.success(`${file.name} uploaded successfully`)
+    } catch (error) {
+      toast.error("Failed to upload voice file")
+      console.error(error)
+    }
+  }
+
+  const handleVoiceFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    handleVoiceFileUpload(e.target.files)
+    if (voiceFileInputRef.current) {
+      voiceFileInputRef.current.value = ""
+    }
+  }
+
+  const handlePlayVoiceFile = (voiceFile: CustomVoiceFile) => {
+    if (playingVoiceId === voiceFile.id) {
+      audioRef.current?.pause()
+      setPlayingVoiceId(null)
+      return
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
+
+    const audio = new Audio(voiceFile.audioDataUrl)
+    audio.volume = settings.volume
+    audioRef.current = audio
+
+    audio.onended = () => {
+      setPlayingVoiceId(null)
+    }
+
+    audio.onerror = () => {
+      setPlayingVoiceId(null)
+      toast.error("Failed to play audio file")
+    }
+
+    audio.play()
+    setPlayingVoiceId(voiceFile.id)
+  }
+
+  const handleDeleteVoiceFile = (id: string) => {
+    if (playingVoiceId === id) {
+      audioRef.current?.pause()
+      setPlayingVoiceId(null)
+    }
+    setCustomVoiceFiles((current) => (current || []).filter((f) => f.id !== id))
+    toast.success("Voice file deleted")
+  }
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   const englishVoices = voices.filter((v) => v.lang.startsWith("en"))
@@ -819,6 +931,101 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
             <li>Try adjusting speed and pitch to find your perfect voice</li>
             <li>Your settings are saved per account</li>
           </ul>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <MusicNote size={16} weight="fill" className="text-primary" />
+                Custom Voice Files
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload audio files to use as custom voice responses
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-xs">
+              {voiceFiles.length}
+            </Badge>
+          </div>
+
+          <input
+            ref={voiceFileInputRef}
+            type="file"
+            className="hidden"
+            accept="audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/aac,.mp3,.wav,.ogg,.m4a,.aac"
+            onChange={handleVoiceFileInputChange}
+          />
+
+          <Button
+            onClick={() => voiceFileInputRef.current?.click()}
+            variant="outline"
+            className="w-full border-primary/50 text-primary hover:bg-primary/10"
+          >
+            <UploadSimple size={18} weight="fill" className="mr-2" />
+            Upload Voice File
+          </Button>
+
+          {voiceFiles.length > 0 ? (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              <AnimatePresence>
+                {voiceFiles.map((voiceFile) => (
+                  <motion.div
+                    key={voiceFile.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg group hover:bg-muted/70 transition-colors"
+                  >
+                    <div className="text-primary">
+                      <MusicNote size={20} weight="fill" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{voiceFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {voiceFile.duration ? formatDuration(voiceFile.duration) : "Unknown"} · {new Date(voiceFile.uploadedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 hover:bg-accent/20"
+                      onClick={() => handlePlayVoiceFile(voiceFile)}
+                      title={playingVoiceId === voiceFile.id ? "Stop" : "Play"}
+                    >
+                      {playingVoiceId === voiceFile.id ? (
+                        <Pause size={16} weight="fill" className="text-accent" />
+                      ) : (
+                        <Play size={16} weight="fill" className="text-accent" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                      onClick={() => handleDeleteVoiceFile(voiceFile.id)}
+                      title="Delete"
+                    >
+                      <Trash size={16} weight="fill" className="text-destructive" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <div className="text-center py-6 border-2 border-dashed border-border rounded-lg">
+              <MusicNote size={32} className="mx-auto mb-2 text-muted-foreground" weight="duotone" />
+              <p className="text-sm text-muted-foreground">
+                No custom voice files uploaded yet
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Supports MP3, WAV, OGG, M4A, AAC (max 5MB)
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
