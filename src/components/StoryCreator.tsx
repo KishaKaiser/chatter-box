@@ -691,7 +691,7 @@ Return only the chapter content as plain text, no JSON formatting.`
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="max-h-[400px] overflow-y-auto">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {allTemplates.map((template) => (
                         <motion.button
