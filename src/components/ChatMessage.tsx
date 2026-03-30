@@ -34,6 +34,7 @@ export type Message = {
 type ChatMessageProps = {
   message: Message
   onRegenerate?: (messageId: string) => void
+  onImageClick?: (imageUrl: string) => void
 }
 
 type ContentPart = {
@@ -42,7 +43,7 @@ type ContentPart = {
   language?: string
 }
 
-export function ChatMessage({ message, onRegenerate }: ChatMessageProps) {
+export function ChatMessage({ message, onRegenerate, onImageClick }: ChatMessageProps) {
   const isBot = message.role === "bot"
   const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
   const isThisMessageSpeaking = isSpeaking && currentText === message.content
@@ -209,26 +210,52 @@ export function ChatMessage({ message, onRegenerate }: ChatMessageProps) {
           {message.attachments && message.attachments.length > 0 && (
             <div className="mt-2 space-y-2">
               {message.attachments.map((attachment) => (
-                <div
-                  key={attachment.id}
-                  className={`flex items-center gap-2 p-2 rounded-lg ${
-                    isBot ? "bg-background/50" : "bg-background/20"
-                  }`}
-                >
-                  <div className={isBot ? "text-primary" : "text-accent-foreground/70"}>
-                    {getFileIcon(attachment.type, attachment.name)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{attachment.name}</p>
-                    {attachment.size && (
-                      <p className="text-[11px] opacity-70">
-                        {(attachment.size / 1024).toFixed(1)} KB
-                      </p>
-                    )}
-                  </div>
-                  <Badge variant="secondary" className="text-[10px] h-5">
-                    {getFileTypeLabel(attachment.type, attachment.name)}
-                  </Badge>
+                <div key={attachment.id}>
+                  {attachment.url && attachment.type.includes("image") ? (
+                    <div 
+                      className="rounded-lg overflow-hidden border border-border cursor-pointer hover:border-accent transition-colors group"
+                      onClick={() => onImageClick?.(attachment.url!)}
+                      title="Click to edit image"
+                    >
+                      <img 
+                        src={attachment.url} 
+                        alt={attachment.name}
+                        className="max-w-full h-auto max-h-[400px] object-contain group-hover:opacity-90 transition-opacity"
+                      />
+                      <div className={`flex items-center gap-2 p-2 ${
+                        isBot ? "bg-background/50" : "bg-background/20"
+                      }`}>
+                        <div className={isBot ? "text-primary" : "text-accent-foreground/70"}>
+                          <FileImage size={14} weight="fill" />
+                        </div>
+                        <p className="text-xs font-medium flex-1 truncate">{attachment.name}</p>
+                        <Badge variant="secondary" className="text-[10px] h-5">
+                          IMAGE
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`flex items-center gap-2 p-2 rounded-lg ${
+                        isBot ? "bg-background/50" : "bg-background/20"
+                      }`}
+                    >
+                      <div className={isBot ? "text-primary" : "text-accent-foreground/70"}>
+                        {getFileIcon(attachment.type, attachment.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{attachment.name}</p>
+                        {attachment.size && (
+                          <p className="text-[11px] opacity-70">
+                            {(attachment.size / 1024).toFixed(1)} KB
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] h-5">
+                        {getFileTypeLabel(attachment.type, attachment.name)}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

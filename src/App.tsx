@@ -407,6 +407,23 @@ def example():
     setPendingAttachments((current) => current.filter((att) => att.id !== id))
   }
 
+  const handleImageSaveToChat = (imageDataUrl: string) => {
+    const imageAttachment: MessageAttachment = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      name: `image-${Date.now()}.png`,
+      type: 'image/png',
+      url: imageDataUrl,
+    }
+    
+    setPendingAttachments((current) => [...current, imageAttachment])
+  }
+
+  const handleImageClick = (imageUrl: string) => {
+    setImageToEdit(imageUrl)
+    setImageEditorMode("edit")
+    setImageEditorOpen(true)
+  }
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDraggingFile(false)
@@ -673,6 +690,7 @@ def example():
                   key={message.id} 
                   message={message}
                   onRegenerate={handleRegenerateResponse}
+                  onImageClick={handleImageClick}
                 />
               ))}
               
@@ -776,6 +794,7 @@ def example():
         onClose={() => setImageEditorOpen(false)}
         imageUrl={imageToEdit}
         mode={imageEditorMode}
+        onSaveToChat={handleImageSaveToChat}
       />
     </div>
   )

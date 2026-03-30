@@ -28,9 +28,10 @@ interface ImageEditorProps {
   onClose: () => void
   imageUrl?: string
   mode: "edit" | "create" | "enhance"
+  onSaveToChat?: (imageDataUrl: string) => void
 }
 
-export function ImageEditor({ open, onClose, imageUrl, mode }: ImageEditorProps) {
+export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: ImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null)
   const [brightness, setBrightness] = useState(100)
@@ -127,13 +128,15 @@ export function ImageEditor({ open, onClose, imageUrl, mode }: ImageEditorProps)
     const canvas = canvasRef.current
     if (!canvas) return
 
-    canvas.toBlob((blob) => {
-      if (!blob) return
-      const url = URL.createObjectURL(blob)
-      
-      toast.success("Image ready to send (feature coming soon)")
+    const dataUrl = canvas.toDataURL("image/png")
+    
+    if (onSaveToChat) {
+      onSaveToChat(dataUrl)
+      toast.success("Image added to chat!")
       onClose()
-    })
+    } else {
+      toast.error("Unable to save to chat")
+    }
   }
 
   const generateImage = async () => {
