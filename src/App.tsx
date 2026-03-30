@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, ChatsCircle } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -623,7 +623,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-3 rounded-xl">
-                <Chat size={28} className="text-primary" weight="duotone" />
+                <ChatsCircle size={28} className="text-primary" weight="duotone" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
@@ -673,7 +673,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
         {threadList.length > 0 && (
           <div className="mb-3">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Chat size={16} weight="fill" />
+              <ChatsCircle size={16} weight="fill" />
               <span className="text-sm font-medium">
                 {threadList.find(t => t.id === activeThreadId)?.title || "Chat"}
               </span>
@@ -709,7 +709,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
               {currentMessages.length === 0 && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Chat size={32} className="text-primary" weight="fill" />
+                    <ChatsCircle size={32} className="text-primary" weight="fill" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
                   <p className="text-muted-foreground text-sm max-w-md mx-auto">
