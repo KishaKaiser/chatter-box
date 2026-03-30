@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { ProfileSettings } from "@/components/ProfileSettings"
+import { ConversationThreads, ConversationThread } from "@/components/ConversationThreads"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -28,8 +29,8 @@ function App() {
   const [currentUser, setCurrentUser] = useKV<UserAccountType | null>("current-user", null)
   const [allAccounts, setAllAccounts] = useKV<UserAccountType[]>("user-accounts", [])
   const userKey = (currentUser?.id || "guest")
-  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}`, [])
-  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
+  const [threads, setThreads] = useKV<ConversationThread[]>(`conversation-threads-${userKey}`, [])
+  const [currentThreadId, setCurrentThreadId] = useKV<string>(`current-thread-${userKey}`, "")
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
@@ -38,6 +39,28 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const threadList = threads || []
+    if (threadList.length === 0) {
+      const defaultThread: ConversationThread = {
+        id: `thread-${Date.now()}`,
+        title: "General Chat",
+        createdAt: Date.now(),
+        lastUpdatedAt: Date.now(),
+        messageCount: 0,
+      }
+      setThreads([defaultThread])
+      setCurrentThreadId(defaultThread.id)
+    } else if (!currentThreadId || !threadList.find(t => t.id === currentThreadId)) {
+      setCurrentThreadId(threadList[0].id)
+    }
+  }, [threads, currentThreadId, setThreads, setCurrentThreadId])
+
+  const threadList = threads || []
+  const activeThreadId = currentThreadId || threadList[0]?.id || ""
+  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
+  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
   
   const {
     isListening,
@@ -128,6 +151,16 @@ def example():
     }
   }
 
+  const updateThreadMetadata = (messageCount: number) => {
+    setThreads((current) =>
+      (current || []).map((t) =>
+        t.id === activeThreadId
+          ? { ...t, lastUpdatedAt: Date.now(), messageCount }
+          : t
+      )
+    )
+  }
+
   const handleSendMessage = async () => {
     if ((!inputValue.trim() && pendingAttachments.length === 0) || isTyping) return
 
@@ -153,9 +186,54 @@ def example():
       timestamp: Date.now(),
     }
 
-    setMessages((current) => [...(current || []), botMessage])
+    setMessages((current) => {
+      const updated = [...(current || []), botMessage]
+      updateThreadMetadata(updated.length)
+      return updated
+    })
     setIsTyping(false)
     inputRef.current?.focus()
+  }
+
+  const handleThreadSelect = (threadId: string) => {
+    setCurrentThreadId(threadId)
+  }
+
+  const handleThreadCreate = (title: string) => {
+    const newThread: ConversationThread = {
+      id: `thread-${Date.now()}`,
+      title,
+      createdAt: Date.now(),
+      lastUpdatedAt: Date.now(),
+      messageCount: 0,
+    }
+    setThreads((current) => [...(current || []), newThread])
+    setCurrentThreadId(newThread.id)
+    toast.success(`Created "${title}"`)
+  }
+
+  const handleThreadDelete = (threadId: string) => {
+    const threadToDelete = threadList.find(t => t.id === threadId)
+    if (!threadToDelete) return
+
+    setThreads((current) => {
+      const filtered = (current || []).filter((t) => t.id !== threadId)
+      if (threadId === activeThreadId && filtered.length > 0) {
+        setCurrentThreadId(filtered[0].id)
+      }
+      return filtered
+    })
+    
+    toast.success(`Deleted "${threadToDelete.title}"`)
+  }
+
+  const handleThreadRename = (threadId: string, newTitle: string) => {
+    setThreads((current) =>
+      (current || []).map((t) =>
+        t.id === threadId ? { ...t, title: newTitle } : t
+      )
+    )
+    toast.success("Thread renamed")
   }
 
   const handleFileSelect = async (selectedFiles: FileList | null) => {
@@ -350,6 +428,14 @@ def example():
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ConversationThreads
+                threads={threadList}
+                currentThreadId={activeThreadId}
+                onThreadSelect={handleThreadSelect}
+                onThreadCreate={handleThreadCreate}
+                onThreadDelete={handleThreadDelete}
+                onThreadRename={handleThreadRename}
+              />
               {currentMessages.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -389,6 +475,17 @@ def example():
             </div>
           </div>
         </header>
+
+        {threadList.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Chat size={16} weight="fill" />
+              <span className="text-sm font-medium">
+                {threadList.find(t => t.id === activeThreadId)?.title || "Chat"}
+              </span>
+            </div>
+          </div>
+        )}
 
         <Card
           ref={chatContainerRef}
