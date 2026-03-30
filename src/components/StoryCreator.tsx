@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useKV } from "@github/spark/hooks"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -10,11 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand } from "@phosphor-icons/react"
+import { Slider } from "@/components/ui/slider"
+import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand, Play, Pause, Stop, SpeakerHigh } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { TemplateEditor, CustomTemplate } from "@/components/TemplateEditor"
+import { useTextToSpeech } from "@/hooks/use-text-to-speech"
 
 interface StoryCreatorProps {
   open: boolean
@@ -75,6 +77,58 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   const [setting, setSetting] = useState("")
   const [conflict, setConflict] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
+  
+  const [narratingChapter, setNarratingChapter] = useState<number | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
+  const [selectedVoice, setSelectedVoice] = useKV<string>("narration-voice", "")
+  const [narrationRate, setNarrationRate] = useKV<number>("narration-rate", 1.0)
+  const [narrationPitch, setNarrationPitch] = useKV<number>("narration-pitch", 1.0)
+  const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false)
+  
+  const { isSpeaking, isSupported, voices, speak, stop } = useTextToSpeech({
+    voiceName: selectedVoice || undefined,
+    rate: narrationRate || 1.0,
+    pitch: narrationPitch || 1.0,
+    volume: 1.0
+  })
+  
+  useEffect(() => {
+    if (!isSpeaking && narratingChapter !== null) {
+      setNarratingChapter(null)
+      setIsPaused(false)
+    }
+  }, [isSpeaking, narratingChapter])
+  
+  const handleNarrateChapter = (chapterNumber: number) => {
+    if (!story || !isSupported) {
+      if (!isSupported) {
+        toast.error("Text-to-speech is not supported in your browser")
+      }
+      return
+    }
+    
+    const chapter = story.chapters.find(ch => ch.number === chapterNumber)
+    if (!chapter) return
+    
+    const textToSpeak = `Chapter ${chapter.number}: ${chapter.title}. ${chapter.content}`
+    
+    setNarratingChapter(chapterNumber)
+    setIsPaused(false)
+    speak(textToSpeak, {
+      voiceName: selectedVoice || undefined,
+      rate: narrationRate || 1.0,
+      pitch: narrationPitch || 1.0,
+      volume: 1.0
+    })
+    toast.success("Narration started")
+  }
+  
+  const handleStopNarration = () => {
+    stop()
+    setNarratingChapter(null)
+    setIsPaused(false)
+    toast.info("Narration stopped")
+  }
 
   const sortedSavedStories = [...(savedStories || [])].sort((a, b) => 
     (b.lastEditedAt || b.savedAt || 0) - (a.lastEditedAt || a.savedAt || 0)
@@ -934,6 +988,97 @@ Return only the chapter content as plain text, no JSON formatting.`
               <TabsContent value="view" className="mt-0 space-y-4">
                 {story && (
                   <div className="space-y-6">
+                    {isSupported && (
+                      <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                              <SpeakerHigh size={20} weight="fill" className="text-primary" />
+                              <div>
+                                <CardTitle className="text-base">Voice Narration</CardTitle>
+                                <CardDescription className="text-xs">
+                                  Listen to your story read aloud
+                                </CardDescription>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => setVoiceSettingsOpen(!voiceSettingsOpen)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2"
+                            >
+                              <SpeakerHigh size={16} weight="fill" />
+                              Voice Settings
+                            </Button>
+                          </div>
+                          <AnimatePresence>
+                            {voiceSettingsOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-4 space-y-4 border-t mt-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="voice-select" className="text-sm">
+                                      Voice
+                                    </Label>
+                                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                                      <SelectTrigger id="voice-select" className="text-sm">
+                                        <SelectValue placeholder="Select a voice" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {voices.length > 0 ? (
+                                          voices
+                                            .filter(v => v.lang.startsWith("en"))
+                                            .map((voice) => (
+                                              <SelectItem key={voice.name} value={voice.name}>
+                                                {voice.name}
+                                              </SelectItem>
+                                            ))
+                                        ) : (
+                                          <SelectItem value="default">Default Voice</SelectItem>
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <Label className="text-sm">Speed</Label>
+                                      <span className="text-xs text-muted-foreground">{(narrationRate || 1.0).toFixed(1)}x</span>
+                                    </div>
+                                    <Slider
+                                      value={[narrationRate || 1.0]}
+                                      onValueChange={(value) => setNarrationRate(value[0])}
+                                      min={0.5}
+                                      max={2.0}
+                                      step={0.1}
+                                      className="w-full"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <Label className="text-sm">Pitch</Label>
+                                      <span className="text-xs text-muted-foreground">{(narrationPitch || 1.0).toFixed(1)}</span>
+                                    </div>
+                                    <Slider
+                                      value={[narrationPitch || 1.0]}
+                                      onValueChange={(value) => setNarrationPitch(value[0])}
+                                      min={0.5}
+                                      max={2.0}
+                                      step={0.1}
+                                      className="w-full"
+                                    />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </CardHeader>
+                      </Card>
+                    )}
+
                     <Card className="border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5">
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -1003,6 +1148,32 @@ Return only the chapter content as plain text, no JSON formatting.`
                                       </>
                                     ) : (
                                       <>
+                                        {isSupported && (
+                                          <>
+                                            {narratingChapter === chapter.number && isSpeaking ? (
+                                              <Button
+                                                onClick={handleStopNarration}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                              >
+                                                <Stop size={14} weight="fill" />
+                                                Stop
+                                              </Button>
+                                            ) : (
+                                              <Button
+                                                onClick={() => handleNarrateChapter(chapter.number)}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                                                disabled={isSpeaking || isGenerating}
+                                              >
+                                                <Play size={14} weight="fill" />
+                                                Narrate
+                                              </Button>
+                                            )}
+                                          </>
+                                        )}
                                         <Button
                                           onClick={() => handleStartEditingChapter(chapter.number, chapter.content)}
                                           variant="ghost"
@@ -1037,8 +1208,23 @@ Return only the chapter content as plain text, no JSON formatting.`
                                     placeholder="Edit chapter content..."
                                   />
                                 ) : (
-                                  <div className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
-                                    {chapter.content}
+                                  <div className="relative">
+                                    {narratingChapter === chapter.number && isSpeaking && (
+                                      <div className="absolute top-0 left-0 right-0 flex items-center gap-2 mb-3 p-2 bg-primary/10 border border-primary/30 rounded-lg">
+                                        <motion.div
+                                          animate={{ scale: [1, 1.2, 1] }}
+                                          transition={{ duration: 1.5, repeat: Infinity }}
+                                        >
+                                          <SpeakerHigh size={16} weight="fill" className="text-primary" />
+                                        </motion.div>
+                                        <span className="text-xs font-medium text-primary">
+                                          Reading chapter aloud...
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div className={`text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground ${narratingChapter === chapter.number && isSpeaking ? 'pt-12' : ''}`}>
+                                      {chapter.content}
+                                    </div>
                                   </div>
                                 )}
                               </CardContent>
