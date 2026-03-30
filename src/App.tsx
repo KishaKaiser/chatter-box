@@ -178,8 +178,18 @@ function App() {
 
     let attachmentContext = ""
     if (attachments && attachments.length > 0) {
-      attachmentContext = "\n\nThe user has attached the following files to this message:\n" + 
-        attachments.map(att => `- ${att.name} (${att.type})`).join("\n")
+      const imageAttachments = attachments.filter(att => att.type.includes("image"))
+      const otherAttachments = attachments.filter(att => !att.type.includes("image"))
+      
+      if (imageAttachments.length > 0) {
+        attachmentContext = "\n\nThe user has shared the following image(s) with you:\n" + 
+          imageAttachments.map(att => `- ${att.name}`).join("\n")
+      }
+      
+      if (otherAttachments.length > 0) {
+        attachmentContext += "\n\nThe user has attached the following files:\n" + 
+          otherAttachments.map(att => `- ${att.name} (${att.type})`).join("\n")
+      }
     }
 
     const contextPart = knowledgeContext || "No documents uploaded yet."
@@ -191,7 +201,7 @@ ${contextPart}${attachmentContext}${webSearchContext}${memoryPart}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
+Provide a helpful, conversational response. If the user has shared images with you, acknowledge them briefly and naturally (e.g., "Thanks for sharing the image!" or "I can see you've created an image"). If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
 
 When including code snippets in your response, always use markdown code blocks with the language specified for proper syntax highlighting. For example:
 \`\`\`javascript
