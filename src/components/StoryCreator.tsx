@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useKV } from "@github/spark/hooks"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise } from "@phosphor-icons/react"
+import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 interface StoryCreatorProps {
   open: boolean
@@ -27,18 +29,38 @@ interface StoryChapter {
 }
 
 interface Story {
+  id?: string
   title: string
   genre: string
   tone: string
   length: string
   chapters: StoryChapter[]
   description: string
+  mainCharacter?: string
+  setting?: string
+  conflict?: string
+  additionalNotes?: string
+  savedAt?: number
+  lastEditedAt?: number
+}
+
+interface SavedStory {
+  id: string
+  title: string
+  genre: string
+  savedAt: number
+  lastEditedAt: number
+  chapterCount: number
 }
 
 export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps) {
-  const [currentTab, setCurrentTab] = useState<"setup" | "generate" | "view">("setup")
+  const [currentTab, setCurrentTab] = useState<"setup" | "generate" | "view" | "saved">("saved")
   const [isGenerating, setIsGenerating] = useState(false)
   const [story, setStory] = useState<Story | null>(null)
+  const [savedStories, setSavedStories] = useKV<Story[]>("saved-stories", [])
+  const [storyToDelete, setStoryToDelete] = useState<string | null>(null)
+  const [editingChapter, setEditingChapter] = useState<number | null>(null)
+  const [editedContent, setEditedContent] = useState("")
   
   const [storyTitle, setStoryTitle] = useState("")
   const [storyDescription, setStoryDescription] = useState("")
@@ -50,6 +72,10 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   const [setting, setSetting] = useState("")
   const [conflict, setConflict] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
+
+  const sortedSavedStories = [...(savedStories || [])].sort((a, b) => 
+    (b.lastEditedAt || b.savedAt || 0) - (a.lastEditedAt || a.savedAt || 0)
+  )
 
   const genres = [
     "fantasy", "sci-fi", "mystery", "romance", "thriller", 
@@ -120,18 +146,28 @@ Make the story engaging, creative, and complete. Each chapter should be substant
       const response = await window.spark.llm(promptText, "gpt-4o", true)
       const parsed = JSON.parse(response)
       
+      const storyId = story?.id || `story-${Date.now()}`
+      const now = Date.now()
+      
       const generatedStory: Story = {
+        id: storyId,
         title: storyTitle,
         genre,
         tone,
         length,
         description: storyDescription,
+        mainCharacter: mainCharacter || undefined,
+        setting: setting || undefined,
+        conflict: conflict || undefined,
+        additionalNotes: additionalNotes || undefined,
         chapters: parsed.chapters.map((ch: any) => ({
           id: `chapter-${ch.number}`,
           number: ch.number,
           title: ch.title,
           content: ch.content
-        }))
+        })),
+        savedAt: story?.savedAt || now,
+        lastEditedAt: now
       }
       
       setStory(generatedStory)
@@ -143,6 +179,97 @@ Make the story engaging, creative, and complete. Each chapter should be substant
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const handleSaveStory = () => {
+    if (!story) return
+
+    const now = Date.now()
+    const storyToSave: Story = {
+      ...story,
+      lastEditedAt: now,
+      savedAt: story.savedAt || now
+    }
+
+    setSavedStories((current) => {
+      const existing = (current || []).findIndex(s => s.id === story.id)
+      if (existing !== -1) {
+        const updated = [...(current || [])]
+        updated[existing] = storyToSave
+        return updated
+      }
+      return [...(current || []), storyToSave]
+    })
+
+    setStory(storyToSave)
+    toast.success("Story saved successfully!")
+  }
+
+  const handleLoadStory = (savedStory: Story) => {
+    setStory(savedStory)
+    setStoryTitle(savedStory.title)
+    setStoryDescription(savedStory.description)
+    setGenre(savedStory.genre)
+    setTone(savedStory.tone)
+    setLength(savedStory.length)
+    setNumChapters(savedStory.chapters.length.toString())
+    setMainCharacter(savedStory.mainCharacter || "")
+    setSetting(savedStory.setting || "")
+    setConflict(savedStory.conflict || "")
+    setAdditionalNotes(savedStory.additionalNotes || "")
+    setCurrentTab("view")
+    toast.success(`Loaded "${savedStory.title}"`)
+  }
+
+  const handleDeleteStory = (storyId: string) => {
+    const storyToRemove = (savedStories || []).find(s => s.id === storyId)
+    
+    setSavedStories((current) => 
+      (current || []).filter(s => s.id !== storyId)
+    )
+
+    if (story?.id === storyId) {
+      setStory(null)
+      handleReset()
+    }
+
+    toast.success(`"${storyToRemove?.title}" deleted`)
+    setStoryToDelete(null)
+  }
+
+  const handleEditChapter = (chapterNumber: number, newContent: string) => {
+    if (!story) return
+
+    setStory(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        chapters: prev.chapters.map(ch =>
+          ch.number === chapterNumber
+            ? { ...ch, content: newContent }
+            : ch
+        ),
+        lastEditedAt: Date.now()
+      }
+    })
+  }
+
+  const handleStartEditingChapter = (chapterNumber: number, content: string) => {
+    setEditingChapter(chapterNumber)
+    setEditedContent(content)
+  }
+
+  const handleSaveChapterEdit = () => {
+    if (editingChapter === null) return
+    handleEditChapter(editingChapter, editedContent)
+    setEditingChapter(null)
+    setEditedContent("")
+    toast.success("Chapter updated")
+  }
+
+  const handleCancelChapterEdit = () => {
+    setEditingChapter(null)
+    setEditedContent("")
   }
 
   const handleReset = () => {
@@ -275,6 +402,15 @@ Return only the chapter content as plain text, no JSON formatting.`
             {story && (
               <div className="flex gap-2">
                 <Button
+                  onClick={handleSaveStory}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                >
+                  <FloppyDisk size={16} weight="fill" />
+                  Save
+                </Button>
+                <Button
                   onClick={handleDownload}
                   variant="outline"
                   size="sm"
@@ -299,7 +435,11 @@ Return only the chapter content as plain text, no JSON formatting.`
 
         <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)} className="flex-1 flex flex-col">
           <div className="px-6 pt-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="saved" disabled={isGenerating}>
+                <FolderOpen size={16} weight="fill" className="mr-1" />
+                Saved
+              </TabsTrigger>
               <TabsTrigger value="setup" disabled={isGenerating}>
                 Setup
               </TabsTrigger>
@@ -314,6 +454,87 @@ Return only the chapter content as plain text, no JSON formatting.`
 
           <ScrollArea className="flex-1 px-6">
             <div className="py-6">
+              <TabsContent value="saved" className="mt-0 space-y-4">
+                {sortedSavedStories && sortedSavedStories.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        {sortedSavedStories.length} saved {sortedSavedStories.length === 1 ? "story" : "stories"}
+                      </p>
+                    </div>
+                    <AnimatePresence>
+                      {sortedSavedStories.map((savedStory, index) => (
+                        <motion.div
+                          key={savedStory.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <Card className="group hover:border-accent/50 transition-colors cursor-pointer">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div 
+                                  className="flex-1 min-w-0"
+                                  onClick={() => handleLoadStory(savedStory)}
+                                >
+                                  <CardTitle className="text-lg mb-1 truncate">
+                                    {savedStory.title}
+                                  </CardTitle>
+                                  <CardDescription className="line-clamp-2">
+                                    {savedStory.description}
+                                  </CardDescription>
+                                  <div className="flex flex-wrap gap-2 mt-3">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {savedStory.genre}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {savedStory.chapters.length} chapters
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {new Date(savedStory.lastEditedAt || savedStory.savedAt || 0).toLocaleDateString()}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setStoryToDelete(savedStory.id!)
+                                  }}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash size={16} weight="fill" />
+                                </Button>
+                              </div>
+                            </CardHeader>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-muted/30 rounded-full flex items-center justify-center">
+                      <FolderOpen size={32} className="text-muted-foreground" weight="fill" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No saved stories yet</h3>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-4">
+                      Create and save your stories to access them later for editing or viewing.
+                    </p>
+                    <Button
+                      onClick={() => setCurrentTab("setup")}
+                      variant="outline"
+                      className="border-accent/50 text-accent hover:bg-accent/10"
+                    >
+                      <Plus size={16} weight="bold" className="mr-2" />
+                      Create New Story
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+
               <TabsContent value="setup" className="mt-0 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -568,22 +789,68 @@ Return only the chapter content as plain text, no JSON formatting.`
                                       <CardTitle className="text-lg">{chapter.title}</CardTitle>
                                     </div>
                                   </div>
-                                  <Button
-                                    onClick={() => handleRegenerateChapter(chapter.number)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="gap-1 text-muted-foreground hover:text-accent"
-                                    disabled={isGenerating}
-                                  >
-                                    <ArrowCounterClockwise size={14} />
-                                    Regenerate
-                                  </Button>
+                                  <div className="flex gap-1">
+                                    {editingChapter === chapter.number ? (
+                                      <>
+                                        <Button
+                                          onClick={handleSaveChapterEdit}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                                        >
+                                          <FloppyDisk size={14} weight="fill" />
+                                          Save
+                                        </Button>
+                                        <Button
+                                          onClick={handleCancelChapterEdit}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="gap-1"
+                                        >
+                                          <X size={14} />
+                                          Cancel
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Button
+                                          onClick={() => handleStartEditingChapter(chapter.number, chapter.content)}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="gap-1 text-muted-foreground hover:text-accent"
+                                          disabled={isGenerating}
+                                        >
+                                          <Sparkle size={14} />
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          onClick={() => handleRegenerateChapter(chapter.number)}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="gap-1 text-muted-foreground hover:text-accent"
+                                          disabled={isGenerating}
+                                        >
+                                          <ArrowCounterClockwise size={14} />
+                                          Regenerate
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               </CardHeader>
                               <CardContent>
-                                <div className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
-                                  {chapter.content}
-                                </div>
+                                {editingChapter === chapter.number ? (
+                                  <Textarea
+                                    value={editedContent}
+                                    onChange={(e) => setEditedContent(e.target.value)}
+                                    className="min-h-[300px] text-sm leading-relaxed font-normal"
+                                    placeholder="Edit chapter content..."
+                                  />
+                                ) : (
+                                  <div className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                                    {chapter.content}
+                                  </div>
+                                )}
                               </CardContent>
                             </Card>
                           </motion.div>
@@ -597,6 +864,27 @@ Return only the chapter content as plain text, no JSON formatting.`
           </ScrollArea>
         </Tabs>
       </DialogContent>
+
+      <AlertDialog open={!!storyToDelete} onOpenChange={() => setStoryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Story?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{(sortedSavedStories || []).find(s => s.id === storyToDelete)?.title}". 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => storyToDelete && handleDeleteStory(storyToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }
