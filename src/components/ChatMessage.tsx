@@ -147,9 +147,9 @@ export function ChatMessage({ message, onRegenerate, onImageClick, userKey = "gu
             isBot
               ? "bg-card text-card-foreground rounded-tl-sm"
               : "bg-accent text-accent-foreground rounded-tr-sm"
-          } ${contentParts.some(p => p.type === "code") ? "p-0" : "px-4 py-3"}`}
+          }`}
         >
-          <div className={`flex items-start gap-2 ${contentParts.some(p => p.type === "code") ? "px-4 py-3" : ""}`}>
+          <div className="flex items-start gap-2 px-4 py-3">
             <div className="flex-1 overflow-hidden">
               {contentParts.map((part, index) => {
                 if (part.type === "code") {
