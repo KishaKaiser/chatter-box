@@ -14,6 +14,7 @@ import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, Flop
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { TemplateEditor, CustomTemplate } from "@/components/TemplateEditor"
 
 interface StoryCreatorProps {
   open: boolean
@@ -61,6 +62,8 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   const [storyToDelete, setStoryToDelete] = useState<string | null>(null)
   const [editingChapter, setEditingChapter] = useState<number | null>(null)
   const [editedContent, setEditedContent] = useState("")
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false)
+  const [customTemplates, setCustomTemplates] = useKV<CustomTemplate[]>("custom-story-templates", [])
   
   const [storyTitle, setStoryTitle] = useState("")
   const [storyDescription, setStoryDescription] = useState("")
@@ -192,10 +195,29 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
     }
   ]
 
+  const allTemplates = [
+    ...templates,
+    ...(customTemplates || []).map(ct => ({
+      id: ct.id,
+      name: ct.name,
+      genre: ct.genre,
+      tone: ct.tone,
+      description: ct.description,
+      emoji: ct.emoji
+    }))
+  ]
+
   const applyTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId)
+    const template = allTemplates.find(t => t.id === templateId)
     if (!template) return
 
+    setGenre(template.genre)
+    setTone(template.tone)
+    setStoryDescription(template.description)
+    toast.success(`Applied "${template.name}" template`)
+  }
+
+  const handleSelectCustomTemplate = (template: CustomTemplate) => {
     setGenre(template.genre)
     setTone(template.tone)
     setStoryDescription(template.description)
@@ -647,17 +669,31 @@ Return only the chapter content as plain text, no JSON formatting.`
               <TabsContent value="setup" className="mt-0 space-y-6">
                 <Card className="border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5">
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <MagicWand size={18} weight="fill" className="text-accent" />
-                      Quick Start Templates
-                    </CardTitle>
-                    <CardDescription>
-                      Choose a template to get started quickly with pre-filled genre and tone
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <MagicWand size={18} weight="fill" className="text-accent" />
+                          Quick Start Templates
+                        </CardTitle>
+                        <CardDescription>
+                          Choose a template to get started quickly with pre-filled genre and tone
+                        </CardDescription>
+                      </div>
+                      <Button
+                        onClick={() => setTemplateEditorOpen(true)}
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 border-accent/50 text-accent hover:bg-accent/10"
+                      >
+                        <Plus size={14} weight="bold" />
+                        <span className="hidden sm:inline">Manage Templates</span>
+                        <span className="sm:hidden">Templates</span>
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {templates.map((template) => (
+                      {allTemplates.map((template) => (
                         <motion.button
                           key={template.id}
                           onClick={() => applyTemplate(template.id)}
@@ -1039,6 +1075,12 @@ Return only the chapter content as plain text, no JSON formatting.`
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TemplateEditor
+        open={templateEditorOpen}
+        onClose={() => setTemplateEditorOpen(false)}
+        onSelectTemplate={handleSelectCustomTemplate}
+      />
     </Dialog>
   )
 }
