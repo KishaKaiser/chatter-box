@@ -666,6 +666,12 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+              <UserAccount
+                currentUser={currentUser || null}
+                onLogin={handleLogin}
+                onLogout={handleLogout}
+                onOpenSettings={() => setSettingsOpen(true)}
+              />
               {currentUser && (
                 <ProfileSettings
                   currentUser={currentUser}
@@ -689,12 +695,6 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   onExternalOpenChange={setSettingsOpen}
                 />
               )}
-              <UserAccount
-                currentUser={currentUser || null}
-                onLogin={handleLogin}
-                onLogout={handleLogout}
-                onOpenSettings={() => setSettingsOpen(true)}
-              />
             </div>
           </div>
         </header>
