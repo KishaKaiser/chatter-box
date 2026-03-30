@@ -96,6 +96,8 @@ export function ProfileSettings({
 }: ProfileSettingsProps) {
   const [open, setOpen] = useState(false)
   const [displayName, setDisplayName] = useState(currentUser.displayName || currentUser.username)
+  const [preferredName, setPreferredName] = useState(currentUser.preferredName || "")
+  const [chatbotName, setChatbotName] = useState(currentUser.chatbotName || "Chatter Box")
   const [selectedAvatar, setSelectedAvatar] = useState(currentUser.avatarUrl || "")
   const [customAvatarUrl, setCustomAvatarUrl] = useState("")
   const [isDragging, setIsDragging] = useState(false)
@@ -119,9 +121,16 @@ export function ProfileSettings({
       return
     }
 
+    if (chatbotName.trim().length < 2) {
+      toast.error("Chatbot name must be at least 2 characters")
+      return
+    }
+
     const updatedUser: UserAccount = {
       ...currentUser,
       displayName: displayName.trim(),
+      preferredName: preferredName.trim() || undefined,
+      chatbotName: chatbotName.trim(),
       avatarUrl: selectedAvatar || undefined,
     }
 
@@ -316,6 +325,36 @@ export function ProfileSettings({
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="text-[15px]"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="preferredName">Preferred Name (How the bot addresses you)</Label>
+              <Input
+                id="preferredName"
+                type="text"
+                placeholder="e.g., Alex, Dr. Smith, friend (optional)"
+                value={preferredName}
+                onChange={(e) => setPreferredName(e.target.value)}
+                className="text-[15px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to use your display name
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="chatbotName">Chatbot Name</Label>
+              <Input
+                id="chatbotName"
+                type="text"
+                placeholder="Enter chatbot name"
+                value={chatbotName}
+                onChange={(e) => setChatbotName(e.target.value)}
+                className="text-[15px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Customize what you call your AI assistant
+              </p>
             </div>
 
             <div className="space-y-3">

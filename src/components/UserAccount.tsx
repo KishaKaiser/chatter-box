@@ -30,6 +30,8 @@ export interface UserAccount {
   createdAt: number
   displayName?: string
   avatarUrl?: string
+  preferredName?: string
+  chatbotName?: string
 }
 
 interface UserAccountProps {

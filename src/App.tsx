@@ -204,13 +204,16 @@ function App() {
     const contextPart = knowledgeContext || "No documents uploaded yet."
     const memoryPart = rememberWebSearch && webSearchMemory ? `\n\nPreviously learned from web searches:\n${webSearchMemory}` : ""
     
-    const promptText = `You are Chatter Box, a helpful AI assistant. You have access to the following knowledge base:
+    const botName = currentUser?.chatbotName || "Chatter Box"
+    const userName = currentUser?.preferredName || currentUser?.displayName || currentUser?.username || "there"
+    
+    const promptText = `You are ${botName}, a helpful AI assistant. When addressing the user, call them "${userName}". You have access to the following knowledge base:
 
 ${contextPart}${attachmentContext}${webSearchContext}${memoryPart}
 
 User question: ${userMessage}
 
-Provide a helpful, conversational response. If the user has shared images with you, acknowledge them briefly and naturally (e.g., "Thanks for sharing the image!" or "I can see you've created an image"). If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
+Provide a helpful, conversational response. Address the user as "${userName}" occasionally in your responses to make it more personal. If the user has shared images with you, acknowledge them briefly and naturally (e.g., "Thanks for sharing the image!" or "I can see you've created an image"). If the question relates to the uploaded documents, attached files, or web search results, reference them specifically. If web search results are provided, cite the sources by mentioning the website names in your response naturally. If you don't have relevant information in your knowledge base, be honest about it and still try to help with general knowledge.
 
 When including code snippets in your response, always use markdown code blocks with the language specified for proper syntax highlighting. For example:
 \`\`\`javascript
@@ -561,11 +564,14 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
       return
     }
 
-    let content = "Chatter Box - Conversation Export\n"
+    const botName = currentUser?.chatbotName || "Chatter Box"
+    const userName = currentUser?.preferredName || currentUser?.displayName || currentUser?.username || "User"
+
+    let content = `${botName} - Conversation Export\n`
     content += "=" + "=".repeat(50) + "\n\n"
     
     currentMessages.forEach((msg) => {
-      const role = msg.role === "user" ? "You" : "Chatter Box"
+      const role = msg.role === "user" ? userName : botName
       const timestamp = formatTimestamp(msg.timestamp)
       content += `[${timestamp}] ${role}:\n${msg.content}\n\n`
     })
@@ -574,7 +580,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `chatter-box-export-${Date.now()}.txt`
+    a.download = `${botName.toLowerCase().replace(/\s+/g, '-')}-export-${Date.now()}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -589,11 +595,17 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
       return
     }
 
+    const botName = currentUser?.chatbotName || "Chatter Box"
+    const userName = currentUser?.preferredName || currentUser?.displayName || currentUser?.username || "User"
+
     const exportData = {
       exportDate: new Date().toISOString(),
       messageCount: currentMessages.length,
+      chatbotName: botName,
+      userName: userName,
       messages: currentMessages.map(msg => ({
         role: msg.role,
+        sender: msg.role === "user" ? userName : botName,
         content: msg.content,
         timestamp: msg.timestamp,
         formattedTimestamp: formatTimestamp(msg.timestamp)
@@ -604,7 +616,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `chatter-box-export-${Date.now()}.json`
+    a.download = `${botName.toLowerCase().replace(/\s+/g, '-')}-export-${Date.now()}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -654,7 +666,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
-                  Chatter Box
+                  {currentUser?.chatbotName || "Chatter Box"}
                 </h1>
                 <p className="text-muted-foreground text-sm md:text-base">
                   Your AI assistant that learns from your documents
@@ -764,7 +776,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                         <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
                           <ChatsCircle size={32} className="text-primary" weight="fill" />
                         </div>
-                        <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
+                        <h3 className="text-lg font-semibold mb-2">Welcome to {currentUser?.chatbotName || "Chatter Box"}!</h3>
                         <p className="text-muted-foreground text-sm max-w-md mx-auto">
                           {currentFiles.length === 0
                             ? "Start by uploading some documents in settings, then ask me anything!"
