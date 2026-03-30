@@ -622,8 +622,8 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-xl">
-                <Chat size={32} className="text-primary" weight="fill" />
+              <div className="bg-primary/10 p-3 rounded-xl">
+                <Chat size={28} className="text-primary" weight="duotone" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ letterSpacing: '-0.02em' }}>
