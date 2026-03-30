@@ -665,17 +665,17 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
         <div className="space-y-2">
           <Label htmlFor="voice-select">Select Voice</Label>
           <Select
-            value={settings.voiceName || ""}
+            value={settings.voiceName || "default"}
             onValueChange={(value) => setVoiceSettings((prev) => ({ 
               ...(prev || { rate: 1.0, pitch: 1.0, volume: 1.0 }), 
-              voiceName: value || undefined 
+              voiceName: value === "default" ? undefined : value 
             }))}
           >
             <SelectTrigger id="voice-select" className="w-full">
               <SelectValue placeholder="Default voice" />
             </SelectTrigger>
             <SelectContent className="max-h-[300px]">
-              <SelectItem value="">Default (Auto-select)</SelectItem>
+              <SelectItem value="default">Default (Auto-select)</SelectItem>
               {englishVoices.length > 0 && (
                 <>
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
