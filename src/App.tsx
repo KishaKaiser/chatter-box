@@ -301,6 +301,27 @@ def example():
     toast.success(`"${thread.title}" restored`)
   }
 
+  const handleBulkArchive = (threadIds: string[]) => {
+    setThreads((current) =>
+      (current || []).map((t) =>
+        threadIds.includes(t.id) ? { ...t, archived: true } : t
+      )
+    )
+
+    const remainingActive = activeThreads.filter(t => !threadIds.includes(t.id))
+    if (threadIds.includes(activeThreadId) && remainingActive.length > 0) {
+      setCurrentThreadId(remainingActive[0].id)
+    }
+  }
+
+  const handleBulkUnarchive = (threadIds: string[]) => {
+    setThreads((current) =>
+      (current || []).map((t) =>
+        threadIds.includes(t.id) ? { ...t, archived: false } : t
+      )
+    )
+  }
+
   const handleFileSelect = async (selectedFiles: FileList | null) => {
     if (!selectedFiles || selectedFiles.length === 0) return
 
@@ -502,6 +523,8 @@ def example():
                 onThreadRename={handleThreadRename}
                 onThreadArchive={handleThreadArchive}
                 onThreadUnarchive={handleThreadUnarchive}
+                onBulkArchive={handleBulkArchive}
+                onBulkUnarchive={handleBulkUnarchive}
               />
               {currentMessages.length > 0 && (
                 <DropdownMenu>
