@@ -1,16 +1,20 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, ChatsCircle } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, ChatsCircle, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatMessage, Message, MessageAttachment } from "@/components/ChatMessage"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { UserAccount, UserAccount as UserAccountType } from "@/components/UserAccount"
 import { ProfileSettings } from "@/components/ProfileSettings"
 import { ConversationThread } from "@/components/ConversationThreads"
+import { TextToImage } from "@/components/TextToImage"
+import { ImageEditor } from "@/components/ImageEditor"
+import { StoryCreator } from "@/components/StoryCreator"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -33,6 +37,11 @@ function App() {
   const [webSearchMemory, setWebSearchMemory] = useKV<string>(`web-search-memory-${userKey}`, "")
   const [isSearching, setIsSearching] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<"chat" | "create-image" | "edit-image" | "story">("chat")
+  const [imageEditorOpen, setImageEditorOpen] = useState(false)
+  const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("create")
+  const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
+  const [storyCreatorOpen, setStoryCreatorOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -690,7 +699,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
           </div>
         </header>
 
-        {threadList.length > 0 && (
+        {threadList.length > 0 && activeTab === "chat" && (
           <div className="mb-3">
             <div className="flex items-center gap-2 text-muted-foreground">
               <ChatsCircle size={16} weight="fill" />
@@ -701,148 +710,243 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
           </div>
         )}
 
-        <Card
-          ref={chatContainerRef}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className="flex flex-col h-[calc(100vh-200px)] border-2 relative"
-        >
-          {isDraggingFile && (
-            <div className="absolute inset-0 z-50 bg-accent/20 backdrop-blur-sm border-4 border-accent border-dashed rounded-lg flex items-center justify-center">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="bg-card p-8 rounded-2xl shadow-2xl border-2 border-accent"
-              >
-                <Paperclip size={48} className="text-accent mx-auto mb-3" weight="fill" />
-                <p className="text-lg font-semibold text-center">Drop file here</p>
-                <p className="text-sm text-muted-foreground text-center mt-1">
-                  Code files, documents, images, ZIP (max 10MB)
-                </p>
-              </motion.div>
+        <Card className="border-2">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+            <div className="border-b border-border px-4 pt-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="chat" className="gap-2">
+                  <ChatsCircle size={18} weight="fill" />
+                  {!isMobile && "Chat"}
+                </TabsTrigger>
+                <TabsTrigger value="create-image" className="gap-2">
+                  <Sparkle size={18} weight="fill" />
+                  {!isMobile && "Create AI Image"}
+                </TabsTrigger>
+                <TabsTrigger value="edit-image" className="gap-2">
+                  <PaintBrush size={18} weight="fill" />
+                  {!isMobile && "Edit Image"}
+                </TabsTrigger>
+                <TabsTrigger value="story" className="gap-2">
+                  <BookOpen size={18} weight="fill" />
+                  {!isMobile && "Create A Story"}
+                </TabsTrigger>
+              </TabsList>
             </div>
-          )}
-          
-          <ScrollArea className="flex-1 p-6" ref={scrollRef}>
-            <div className="space-y-4">
-              {currentMessages.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                    <ChatsCircle size={32} className="text-primary" weight="fill" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
-                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                    {currentFiles.length === 0
-                      ? "Start by uploading some documents in settings, then ask me anything!"
-                      : "I've learned from your documents. Ask me anything!"}
-                  </p>
-                </div>
-              )}
-              
-              {currentMessages.map((message) => (
-                <ChatMessage 
-                  key={message.id} 
-                  message={message}
-                  onRegenerate={handleRegenerateResponse}
-                  onImageClick={handleImageClick}
-                  userKey={userKey}
-                />
-              ))}
-              
-              {isTyping && <TypingIndicator />}
-            </div>
-          </ScrollArea>
 
-          <div className="p-4 border-t border-border">
-            {pendingAttachments.length > 0 && (
-              <div className="mb-3 space-y-2">
-                <AnimatePresence>
-                  {pendingAttachments.map((attachment) => (
+            <TabsContent value="chat" className="m-0">
+              <div
+                ref={chatContainerRef}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className="flex flex-col h-[calc(100vh-240px)] relative"
+              >
+                {isDraggingFile && (
+                  <div className="absolute inset-0 z-50 bg-accent/20 backdrop-blur-sm border-4 border-accent border-dashed rounded-lg flex items-center justify-center">
                     <motion.div
-                      key={attachment.id}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg group"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="bg-card p-8 rounded-2xl shadow-2xl border-2 border-accent"
                     >
-                      <Paperclip size={16} className="text-accent" weight="fill" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{attachment.name}</p>
-                        {attachment.size && (
-                          <p className="text-xs text-muted-foreground">
-                            {(attachment.size / 1024).toFixed(1)} KB
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeAttachment(attachment.id)}
-                      >
-                        <X size={14} />
-                      </Button>
+                      <Paperclip size={48} className="text-accent mx-auto mb-3" weight="fill" />
+                      <p className="text-lg font-semibold text-center">Drop file here</p>
+                      <p className="text-sm text-muted-foreground text-center mt-1">
+                        Code files, documents, images, ZIP (max 10MB)
+                      </p>
                     </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-            
-            <div className="flex gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.zip,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.h,.css,.html,.json,.xml,.yaml,.yml,.go,.rs,.rb,.php,.swift,.kt,.sh,.cs,.r,.sql,.vue"
-                onChange={handleFileInputChange}
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isTyping}
-                variant="outline"
-                className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"
-                size="icon"
-                title="Attach file"
-              >
-                <Paperclip size={20} weight="fill" />
-              </Button>
-              <Input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder={isListening ? "Listening..." : "Type your message..."}
-                className="flex-1 focus-visible:ring-accent text-[15px]"
-                disabled={isTyping}
-              />
-              <Button
-                onClick={toggleVoiceInput}
-                disabled={isTyping}
-                variant={isListening ? "default" : "outline"}
-                className={isListening 
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-transform animate-pulse" 
-                  : "border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"}
-                size="icon"
-                title={isListening ? "Stop recording" : "Start voice input"}
-              >
-                {isListening ? (
-                  <MicrophoneSlash size={20} weight="fill" />
-                ) : (
-                  <Microphone size={20} weight="fill" />
+                  </div>
                 )}
-              </Button>
-              <Button
-                onClick={handleSendMessage}
-                disabled={(!inputValue.trim() && pendingAttachments.length === 0) || isTyping}
-                className="bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 transition-transform"
-                size="icon"
-              >
-                <PaperPlaneRight size={20} weight="fill" />
-              </Button>
-            </div>
-          </div>
+                
+                <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+                  <div className="space-y-4">
+                    {currentMessages.length === 0 && (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                          <ChatsCircle size={32} className="text-primary" weight="fill" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">Welcome to Chatter Box!</h3>
+                        <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                          {currentFiles.length === 0
+                            ? "Start by uploading some documents in settings, then ask me anything!"
+                            : "I've learned from your documents. Ask me anything!"}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {currentMessages.map((message) => (
+                      <ChatMessage 
+                        key={message.id} 
+                        message={message}
+                        onRegenerate={handleRegenerateResponse}
+                        onImageClick={handleImageClick}
+                        userKey={userKey}
+                      />
+                    ))}
+                    
+                    {isTyping && <TypingIndicator />}
+                  </div>
+                </ScrollArea>
+
+                <div className="p-4 border-t border-border">
+                  {pendingAttachments.length > 0 && (
+                    <div className="mb-3 space-y-2">
+                      <AnimatePresence>
+                        {pendingAttachments.map((attachment) => (
+                          <motion.div
+                            key={attachment.id}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg group"
+                          >
+                            <Paperclip size={16} className="text-accent" weight="fill" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{attachment.name}</p>
+                              {attachment.size && (
+                                <p className="text-xs text-muted-foreground">
+                                  {(attachment.size / 1024).toFixed(1)} KB
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeAttachment(attachment.id)}
+                            >
+                              <X size={14} />
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.zip,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.h,.css,.html,.json,.xml,.yaml,.yml,.go,.rs,.rb,.php,.swift,.kt,.sh,.cs,.r,.sql,.vue"
+                      onChange={handleFileInputChange}
+                    />
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isTyping}
+                      variant="outline"
+                      className="border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"
+                      size="icon"
+                      title="Attach file"
+                    >
+                      <Paperclip size={20} weight="fill" />
+                    </Button>
+                    <Input
+                      ref={inputRef}
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder={isListening ? "Listening..." : "Type your message..."}
+                      className="flex-1 focus-visible:ring-accent text-[15px]"
+                      disabled={isTyping}
+                    />
+                    <Button
+                      onClick={toggleVoiceInput}
+                      disabled={isTyping}
+                      variant={isListening ? "default" : "outline"}
+                      className={isListening 
+                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-transform animate-pulse" 
+                        : "border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"}
+                      size="icon"
+                      title={isListening ? "Stop recording" : "Start voice input"}
+                    >
+                      {isListening ? (
+                        <MicrophoneSlash size={20} weight="fill" />
+                      ) : (
+                        <Microphone size={20} weight="fill" />
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={(!inputValue.trim() && pendingAttachments.length === 0) || isTyping}
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 transition-transform"
+                      size="icon"
+                    >
+                      <PaperPlaneRight size={20} weight="fill" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="create-image" className="m-0">
+              <div className="h-[calc(100vh-240px)] overflow-auto p-6">
+                <TextToImage onSaveToChat={handleImageSaveToChat} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="edit-image" className="m-0">
+              <div className="h-[calc(100vh-240px)] flex items-center justify-center p-6">
+                <div className="text-center max-w-md">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-accent/10 rounded-full flex items-center justify-center">
+                    <PaintBrush size={40} className="text-accent" weight="duotone" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Image Editor</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Upload an image to edit, enhance, crop, rotate, and apply creative filters to your photos.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setImageEditorMode("edit")
+                      setImageToEdit(undefined)
+                      setImageEditorOpen(true)
+                    }}
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                    size="lg"
+                  >
+                    <PaintBrush size={20} weight="fill" className="mr-2" />
+                    Open Image Editor
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="story" className="m-0">
+              <div className="h-[calc(100vh-240px)] flex items-center justify-center p-6">
+                <div className="text-center max-w-md">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-primary/10 rounded-full flex items-center justify-center">
+                    <BookOpen size={40} className="text-primary" weight="duotone" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Story Creator</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Generate detailed multi-chapter stories with AI. Choose from templates or create custom narratives.
+                  </p>
+                  <Button
+                    onClick={() => setStoryCreatorOpen(true)}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    size="lg"
+                  >
+                    <BookOpen size={20} weight="fill" className="mr-2" />
+                    Open Story Creator
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </Card>
+
+        <ImageEditor
+          open={imageEditorOpen}
+          onClose={() => setImageEditorOpen(false)}
+          imageUrl={imageToEdit}
+          mode={imageEditorMode}
+          onSaveToChat={handleImageSaveToChat}
+        />
+
+        <StoryCreator
+          open={storyCreatorOpen}
+          onClose={() => setStoryCreatorOpen(false)}
+          onSaveToChat={handleStorySaveToChat}
+        />
       </div>
     </div>
   )

@@ -145,8 +145,8 @@ export function ChatMessage({ message, onRegenerate, onImageClick, userKey = "gu
         <div
           className={`rounded-2xl ${
             isBot
-              ? "bg-card text-card-foreground rounded-tl-sm"
-              : "bg-accent text-accent-foreground rounded-tr-sm"
+              ? "text-card-foreground rounded-tl-sm"
+              : "text-accent-foreground rounded-tr-sm"
           }`}
         >
           <div className="flex items-start gap-2 px-4 py-3">
