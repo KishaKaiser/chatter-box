@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,9 @@ import { ChatMessage, Message } from "@/components/ChatMessage"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { KnowledgeBase, KnowledgeFile } from "@/components/KnowledgeBase"
 import { Toaster } from "@/components/ui/sonner"
+import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useVoiceInput } from "@/hooks/use-voice-input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 function App() {
@@ -20,12 +22,47 @@ function App() {
   const [isTyping, setIsTyping] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  
+  const {
+    isListening,
+    transcript,
+    interimTranscript,
+    isSupported,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useVoiceInput()
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages, isTyping])
+
+  useEffect(() => {
+    if (transcript) {
+      setInputValue(transcript + (interimTranscript ? " " + interimTranscript : ""))
+    }
+  }, [transcript, interimTranscript])
+
+  const toggleVoiceInput = () => {
+    if (!isSupported) {
+      toast.error("Voice input is not supported in your browser")
+      return
+    }
+
+    if (isListening) {
+      stopListening()
+      if (transcript.trim()) {
+        handleSendMessage()
+      }
+    } else {
+      resetTranscript()
+      setInputValue("")
+      startListening()
+      toast.success("Listening... Speak now!")
+    }
+  }
 
   const generateBotResponse = async (userMessage: string): Promise<string> => {
     const files = knowledgeFiles || []
@@ -163,10 +200,26 @@ Provide a helpful, conversational response. If the question relates to the uploa
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    placeholder="Type your message..."
+                    placeholder={isListening ? "Listening..." : "Type your message..."}
                     className="flex-1 focus-visible:ring-accent text-[15px]"
                     disabled={isTyping}
                   />
+                  <Button
+                    onClick={toggleVoiceInput}
+                    disabled={isTyping}
+                    variant={isListening ? "default" : "outline"}
+                    className={isListening 
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 transition-transform animate-pulse" 
+                      : "border-accent/50 text-accent hover:bg-accent/10 active:scale-95 transition-transform"}
+                    size="icon"
+                    title={isListening ? "Stop recording" : "Start voice input"}
+                  >
+                    {isListening ? (
+                      <MicrophoneSlash size={20} weight="fill" />
+                    ) : (
+                      <Microphone size={20} weight="fill" />
+                    )}
+                  </Button>
                   <Button
                     onClick={handleSendMessage}
                     disabled={!inputValue.trim() || isTyping}

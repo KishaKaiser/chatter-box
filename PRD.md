@@ -26,6 +26,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Progression: Type message → Submit → Bot shows typing indicator → Response appears → Continues conversation
 - Success criteria: Messages send instantly, responses arrive within 3 seconds, conversation history persists
 
+**Voice Input Support**
+- Functionality: Hands-free message input using speech recognition with real-time transcription
+- Purpose: Enables accessible, convenient messaging without typing, perfect for hands-free scenarios
+- Trigger: Click microphone button to start/stop recording
+- Progression: Click mic → Permission granted → Speak message → Live transcription updates input field → Click mic again or wait → Message sent automatically
+- Success criteria: Speech accurately transcribed in real-time, visual feedback shows recording state, seamless send on completion, browser compatibility gracefully handled
+
 **Knowledge Base Display**
 - Functionality: Visual list showing all uploaded documents/images with ability to remove items
 - Purpose: Gives users visibility and control over what the bot has learned
@@ -48,6 +55,10 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Rapid Messages**: Queue messages if user sends multiple quickly, process in order
 - **Failed Uploads**: Clear error message with retry option if upload fails
 - **Network Issues**: Show connection status, cache messages to send when reconnected
+- **Voice Input Unsupported**: Show error toast if browser doesn't support Web Speech API
+- **Microphone Permissions**: Handle denied permissions gracefully with helpful message
+- **Voice Recognition Errors**: Display error feedback if speech recognition fails mid-recording
+- **Noisy Environments**: Continue transcription despite background noise, allow manual editing of transcript
 
 ## Design Direction
 The design should feel modern, intelligent, and inviting - like talking to a knowledgeable friend. It should balance sophistication with approachability, using a tech-forward aesthetic that feels capable and trustworthy. The interface should fade into the background during conversation while providing clear affordances for uploading and managing knowledge.
@@ -86,6 +97,8 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
 - **Button interactions**: Quick scale (0.98) on press with cyan glow on hover
 - **Knowledge base items**: Fade in on add, slide out on remove (250ms)
 - **Scroll behavior**: Smooth auto-scroll to new messages with gentle deceleration
+- **Voice recording**: Pulsing animation on microphone button while actively listening (destructive red pulse)
+- **Transcript updates**: Smooth text updates in input field as speech is recognized
 
 ## Component Selection
 
@@ -118,6 +131,8 @@ Animations should feel responsive and intelligent, like the AI is thinking and r
   - User avatar: `User` (Phosphor)
   - Remove file: `X` or `Trash` (Phosphor)
   - File types: `File`, `FileImage`, `FilePdf` (Phosphor)
+  - Voice input (inactive): `Microphone` (Phosphor, filled)
+  - Voice input (active): `MicrophoneSlash` (Phosphor, filled, pulsing animation)
 
 - **Spacing**:
   - Container padding: `p-6` (24px)
