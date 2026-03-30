@@ -1,14 +1,14 @@
 export interface PersonalityPreset {
-  name: stri
-  emoji: strin
-  traits: string[]
+  id: string
+  name: string
+  description: string
   emoji: string
   systemPrompt: string
   traits: string[]
 }
 
 export const PERSONALITY_PRESETS: PersonalityPreset[] = [
-   
+  {
     id: "default",
     name: "Friendly Assistant",
     description: "Helpful, warm, and conversational - perfect for everyday chat",
@@ -17,23 +17,15 @@ export const PERSONALITY_PRESETS: PersonalityPreset[] = [
     traits: ["Warm", "Patient", "Helpful", "Clear"]
   },
   {
-  },
     id: "teacher",
+    name: "Patient Teacher",
     description: "Educational, encouraging, breaks down complex topics",
-    systemPrompt
+    emoji: "👨‍🏫",
+    systemPrompt: "You are a patient and encouraging AI teacher. You break down complex topics into understandable pieces, use helpful analogies, and check for understanding. You celebrate progress and make learning feel approachable. You adapt your explanations to the user's level and encourage questions.",
+    traits: ["Educational", "Patient", "Encouraging", "Clear"]
   },
+  {
     id: "witty",
-    
-   
-  },
-    id: "concise",
-    description: "Brief, direct responses without unnecessary elaboratio
-    systemPrompt
-  },
-    id: "empathetic",
-    
-   
-  }
     name: "Witty Companion",
     description: "Humorous, clever, and entertaining while still helpful",
     emoji: "😄",
@@ -56,12 +48,6 @@ export const PERSONALITY_PRESETS: PersonalityPreset[] = [
     systemPrompt: "You are an empathetic and compassionate AI assistant who prioritizes emotional intelligence. You listen carefully, acknowledge feelings, and respond with understanding and warmth. You create a safe, supportive space for users to share. You're thoughtful, caring, and genuinely interested in the user's wellbeing.",
     traits: ["Compassionate", "Understanding", "Supportive", "Caring"]
   }
-]
-
-export function getPersonalityPrompt(presetId?: string): string {
-  const preset = PERSONALITY_PRESETS.find(p => p.id === presetId) || PERSONALITY_PRESETS[0]
-  return preset.systemPrompt
-}
 ]
 
 export function getPersonalityPrompt(presetId?: string): string {
