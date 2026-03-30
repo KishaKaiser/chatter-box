@@ -649,8 +649,8 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-3 rounded-xl">
-                <ChatsCircle size={28} className="text-primary" weight="duotone" />
+              <div className="bg-background p-3 rounded-xl">
+                <ChatsCircle size={40} className="text-white" weight="duotone" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
