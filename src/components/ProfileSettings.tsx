@@ -1,5 +1,5 @@
-import { useState, useRef, ChangeEvent } from "react"
-import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat } from "@phosphor-icons/react"
+import { useState, useRef, ChangeEvent, useEffect } from "react"
+import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Slider } from "@/components/ui/slider"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { UserAccount } from "@/components/UserAccount"
@@ -22,6 +24,8 @@ import { KnowledgeFile } from "@/components/KnowledgeBase"
 import { ConversationThread } from "@/components/ConversationThreads"
 import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
+import { VoiceSettings } from "@/hooks/use-text-to-speech"
+import { useKV } from "@github/spark/hooks"
 
 interface ProfileSettingsProps {
   currentUser: UserAccount
@@ -256,8 +260,9 @@ export function ProfileSettings({
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 gap-1">
+          <TabsList className="grid w-full grid-cols-6 gap-1">
             <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
+            <TabsTrigger value="voice" className="text-xs sm:text-sm">Voice</TabsTrigger>
             <TabsTrigger value="knowledge" className="text-xs sm:text-sm">
               Knowledge
               <Badge variant="secondary" className="ml-1 text-xs hidden sm:inline-flex">
@@ -387,6 +392,10 @@ export function ProfileSettings({
                 Save Changes
               </Button>
             </div>
+          </TabsContent>
+
+          <TabsContent value="voice" className="space-y-6 py-4">
+            <VoiceTabContent currentUser={currentUser} />
           </TabsContent>
 
           <TabsContent value="knowledge" className="space-y-4 py-4">
@@ -551,6 +560,262 @@ export function ProfileSettings({
         onSaveToChat={onStorySaveToChat}
       />
     </Dialog>
+  )
+}
+
+interface VoiceTabContentProps {
+  currentUser: UserAccount
+}
+
+function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
+  const userKey = currentUser.id
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [voiceSettings, setVoiceSettings] = useKV<VoiceSettings>(`voice-settings-${userKey}`, {
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+  })
+  const [testText, setTestText] = useState("Hello, I am your AI assistant. This is how I sound.")
+  const [isTesting, setIsTesting] = useState(false)
+
+  const settings = voiceSettings || { rate: 1.0, pitch: 1.0, volume: 1.0 }
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      const loadVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices()
+        setVoices(availableVoices)
+      }
+
+      loadVoices()
+      window.speechSynthesis.onvoiceschanged = loadVoices
+    }
+  }, [])
+
+  const handleTestVoice = () => {
+    if (!testText.trim()) return
+    
+    window.speechSynthesis.cancel()
+    setIsTesting(true)
+
+    const utterance = new SpeechSynthesisUtterance(testText)
+    
+    if (settings.voiceName) {
+      const selectedVoice = voices.find((v) => v.name === settings.voiceName)
+      if (selectedVoice) {
+        utterance.voice = selectedVoice
+      }
+    }
+
+    utterance.rate = settings.rate
+    utterance.pitch = settings.pitch
+    utterance.volume = settings.volume
+
+    utterance.onend = () => {
+      setIsTesting(false)
+    }
+
+    utterance.onerror = () => {
+      setIsTesting(false)
+      toast.error("Error testing voice")
+    }
+
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const handleStopTest = () => {
+    window.speechSynthesis.cancel()
+    setIsTesting(false)
+  }
+
+  const handleResetToDefaults = () => {
+    setVoiceSettings({
+      rate: 1.0,
+      pitch: 1.0,
+      volume: 1.0,
+    })
+    toast.success("Voice settings reset to defaults")
+  }
+
+  const englishVoices = voices.filter((v) => v.lang.startsWith("en"))
+  const otherVoices = voices.filter((v) => !v.lang.startsWith("en"))
+
+  const getVoiceLabel = (voice: SpeechSynthesisVoice) => {
+    const parts = [voice.name]
+    if (voice.lang) parts.push(`(${voice.lang})`)
+    if (voice.localService) parts.push("📍")
+    return parts.join(" ")
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-accent/10 rounded-full flex items-center justify-center">
+          <SpeakerHigh size={32} className="text-accent" weight="fill" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2">Voice Customization</h3>
+        <p className="text-sm text-muted-foreground">
+          Choose a voice and adjust settings for text-to-speech
+        </p>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="voice-select">Select Voice</Label>
+          <Select
+            value={settings.voiceName || ""}
+            onValueChange={(value) => setVoiceSettings((prev) => ({ 
+              ...(prev || { rate: 1.0, pitch: 1.0, volume: 1.0 }), 
+              voiceName: value || undefined 
+            }))}
+          >
+            <SelectTrigger id="voice-select" className="w-full">
+              <SelectValue placeholder="Default voice" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px]">
+              <SelectItem value="">Default (Auto-select)</SelectItem>
+              {englishVoices.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    English Voices
+                  </div>
+                  {englishVoices.map((voice) => (
+                    <SelectItem key={voice.name} value={voice.name}>
+                      {getVoiceLabel(voice)}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+              {otherVoices.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    Other Languages
+                  </div>
+                  {otherVoices.map((voice) => (
+                    <SelectItem key={voice.name} value={voice.name}>
+                      {getVoiceLabel(voice)}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {voices.length === 0 ? "Loading voices..." : `${voices.length} voices available`}
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="rate-slider">Speed</Label>
+              <span className="text-sm text-muted-foreground">{settings.rate.toFixed(1)}x</span>
+            </div>
+            <Slider
+              id="rate-slider"
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              value={[settings.rate]}
+              onValueChange={([value]) => setVoiceSettings((prev) => ({ 
+                ...(prev || { rate: 1.0, pitch: 1.0, volume: 1.0 }), 
+                rate: value 
+              }))}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">Adjust how fast the voice speaks</p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="pitch-slider">Pitch</Label>
+              <span className="text-sm text-muted-foreground">{settings.pitch.toFixed(1)}</span>
+            </div>
+            <Slider
+              id="pitch-slider"
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              value={[settings.pitch]}
+              onValueChange={([value]) => setVoiceSettings((prev) => ({ 
+                ...(prev || { rate: 1.0, pitch: 1.0, volume: 1.0 }), 
+                pitch: value 
+              }))}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">Adjust the voice pitch (higher or lower)</p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="volume-slider">Volume</Label>
+              <span className="text-sm text-muted-foreground">{Math.round(settings.volume * 100)}%</span>
+            </div>
+            <Slider
+              id="volume-slider"
+              min={0}
+              max={1}
+              step={0.1}
+              value={[settings.volume]}
+              onValueChange={([value]) => setVoiceSettings((prev) => ({ 
+                ...(prev || { rate: 1.0, pitch: 1.0, volume: 1.0 }), 
+                volume: value 
+              }))}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">Adjust the playback volume</p>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2">
+          <Label htmlFor="test-text">Test Text</Label>
+          <Input
+            id="test-text"
+            value={testText}
+            onChange={(e) => setTestText(e.target.value)}
+            placeholder="Enter text to test voice..."
+            className="text-[15px]"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            onClick={isTesting ? handleStopTest : handleTestVoice}
+            className={isTesting 
+              ? "flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+              : "flex-1 bg-accent text-accent-foreground hover:bg-accent/90"}
+            disabled={!testText.trim()}
+          >
+            <SpeakerHigh size={18} weight="fill" className="mr-2" />
+            {isTesting ? "Stop" : "Test Voice"}
+          </Button>
+          <Button
+            onClick={handleResetToDefaults}
+            variant="outline"
+            className="border-muted-foreground/30"
+          >
+            Reset
+          </Button>
+        </div>
+
+        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <SpeakerHigh size={16} weight="fill" className="text-accent" />
+            Voice Tips
+          </h4>
+          <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+            <li>Different browsers provide different voices</li>
+            <li>Voices marked with 📍 are installed locally</li>
+            <li>Try adjusting speed and pitch to find your perfect voice</li>
+            <li>Your settings are saved per account</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   )
 }
 

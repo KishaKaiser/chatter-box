@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
-import { useTextToSpeech } from "@/hooks/use-text-to-speech"
+import { useTextToSpeech, VoiceSettings } from "@/hooks/use-text-to-speech"
 import { CodeBlock } from "@/components/CodeBlock"
 import { toast } from "sonner"
 import {
@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { DotsThree } from "@phosphor-icons/react"
+import { useKV } from "@github/spark/hooks"
 
 export type MessageAttachment = {
   id: string
@@ -35,6 +36,7 @@ type ChatMessageProps = {
   message: Message
   onRegenerate?: (messageId: string) => void
   onImageClick?: (imageUrl: string) => void
+  userKey?: string
 }
 
 type ContentPart = {
@@ -43,9 +45,15 @@ type ContentPart = {
   language?: string
 }
 
-export function ChatMessage({ message, onRegenerate, onImageClick }: ChatMessageProps) {
+export function ChatMessage({ message, onRegenerate, onImageClick, userKey = "guest" }: ChatMessageProps) {
   const isBot = message.role === "bot"
-  const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech()
+  const [voiceSettings] = useKV<VoiceSettings>(`voice-settings-${userKey}`, {
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+  })
+  const settings = voiceSettings || { rate: 1.0, pitch: 1.0, volume: 1.0 }
+  const { isSpeaking, isSupported, toggle, currentText } = useTextToSpeech(settings)
   const isThisMessageSpeaking = isSpeaking && currentText === message.content
 
   const handleCopy = async () => {

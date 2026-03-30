@@ -760,6 +760,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   message={message}
                   onRegenerate={handleRegenerateResponse}
                   onImageClick={handleImageClick}
+                  userKey={userKey}
                 />
               ))}
               

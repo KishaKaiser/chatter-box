@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 
-export function useTextToSpeech() {
+export type VoiceSettings = {
+  voiceName?: string
+  rate: number
+  pitch: number
+  volume: number
+}
+
+export function useTextToSpeech(customSettings?: VoiceSettings) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
@@ -28,7 +35,7 @@ export function useTextToSpeech() {
   }, [])
 
   const speak = useCallback(
-    (text: string) => {
+    (text: string, settings?: VoiceSettings) => {
       if (!isSupported || !text.trim()) return
 
       window.speechSynthesis.cancel()
@@ -37,20 +44,33 @@ export function useTextToSpeech() {
       utteranceRef.current = utterance
       currentTextRef.current = text
 
-      const englishVoice = voices.find(
-        (voice) =>
-          voice.lang.startsWith("en") &&
-          (voice.name.includes("Google") ||
-            voice.name.includes("Microsoft") ||
-            voice.localService)
-      )
-      if (englishVoice) {
-        utterance.voice = englishVoice
+      const voiceSettings = settings || customSettings || {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
       }
 
-      utterance.rate = 1.0
-      utterance.pitch = 1.0
-      utterance.volume = 1.0
+      if (voiceSettings.voiceName) {
+        const selectedVoice = voices.find((v) => v.name === voiceSettings.voiceName)
+        if (selectedVoice) {
+          utterance.voice = selectedVoice
+        }
+      } else {
+        const englishVoice = voices.find(
+          (voice) =>
+            voice.lang.startsWith("en") &&
+            (voice.name.includes("Google") ||
+              voice.name.includes("Microsoft") ||
+              voice.localService)
+        )
+        if (englishVoice) {
+          utterance.voice = englishVoice
+        }
+      }
+
+      utterance.rate = voiceSettings.rate
+      utterance.pitch = voiceSettings.pitch
+      utterance.volume = voiceSettings.volume
 
       utterance.onstart = () => {
         setIsSpeaking(true)
@@ -69,7 +89,7 @@ export function useTextToSpeech() {
 
       window.speechSynthesis.speak(utterance)
     },
-    [isSupported, voices]
+    [isSupported, voices, customSettings]
   )
 
   const stop = useCallback(() => {
@@ -81,11 +101,11 @@ export function useTextToSpeech() {
   }, [isSupported])
 
   const toggle = useCallback(
-    (text: string) => {
+    (text: string, settings?: VoiceSettings) => {
       if (isSpeaking && currentTextRef.current === text) {
         stop()
       } else {
-        speak(text)
+        speak(text, settings)
       }
     },
     [isSpeaking, speak, stop]
@@ -94,6 +114,7 @@ export function useTextToSpeech() {
   return {
     isSpeaking,
     isSupported,
+    voices,
     speak,
     stop,
     toggle,
