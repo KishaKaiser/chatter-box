@@ -85,52 +85,94 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
       
       const enhancedPrompt = `Create an image of: ${prompt}. Style: ${styleModifier}. ${negativePrompt ? `Avoid: ${negativePrompt}.` : ""}`
 
-      const aiPrompt = `You are an AI image composition expert. Analyze this image request and create detailed instructions for rendering it on a canvas:
+      const aiPrompt = `You are an AI image composition expert with expertise in drawing complex subjects. Analyze this image request and create detailed canvas drawing instructions:
 
 User Request: "${enhancedPrompt}"
 
-Return a JSON object with this structure:
+For COMPLEX SUBJECTS (faces, animals, people, creatures):
+- Break down anatomy into primitive shapes (circles, ellipses, curves)
+- Provide precise positioning with normalized coordinates (0-1)
+- Include layering order for depth
+- Add shading/highlight information
+- Specify facial features or animal-specific details
+
+For SIMPLE SUBJECTS (objects, landscapes, abstract):
+- Use standard composition techniques
+- Focus on color harmony and balance
+
+Return a JSON object:
 {
   "scene": {
+    "type": "face|animal|person|creature|object|landscape|abstract",
     "background": {
-      "type": "gradient",
+      "type": "gradient|solid|pattern",
       "colors": ["#hex1", "#hex2", "#hex3"],
-      "direction": "vertical"
+      "direction": "vertical|horizontal|radial|diagonal",
+      "pattern": "dots|stripes|grid"
     },
-    "mainSubject": {
-      "type": "text",
+    "complexSubject": {
+      "type": "face|cat|dog|bird|horse|lion|deer|wolf|bear|elephant|other",
       "position": {"x": 0.5, "y": 0.5},
-      "size": 0.6,
-      "colors": ["#hex1", "#hex2"],
-      "shape": "circle",
-      "text": "main text content if subject is text-based",
-      "details": "description"
+      "size": 0.7,
+      "rotation": 0,
+      "baseColor": "#hex",
+      "layers": [
+        {
+          "part": "head|body|ear|eye|nose|mouth|fur|feather",
+          "shape": "circle|ellipse|curve|bezier|arc",
+          "position": {"x": 0.5, "y": 0.4},
+          "size": 0.3,
+          "color": "#hex",
+          "rotation": 0,
+          "zIndex": 1
+        }
+      ],
+      "features": [
+        {
+          "type": "eye|pupil|nose|mouth|whisker|ear|fur|scale|feather",
+          "position": {"x": 0.48, "y": 0.42},
+          "size": 0.05,
+          "color": "#hex",
+          "shape": "circle|ellipse|line|arc",
+          "detail": "highlight|shadow|outline"
+        }
+      ],
+      "shading": [
+        {
+          "area": "left|right|top|bottom|center",
+          "type": "shadow|highlight",
+          "color": "#hex",
+          "opacity": 0.3,
+          "size": 0.2,
+          "position": {"x": 0.3, "y": 0.5}
+        }
+      ]
     },
     "elements": [
       {
-        "type": "circle",
+        "type": "circle|rectangle|triangle|star|ellipse|line|curve",
         "position": {"x": 0.3, "y": 0.4},
         "size": 0.2,
         "color": "#hex",
-        "text": "text if element has text",
-        "detail": "detail"
+        "rotation": 0,
+        "text": "text content if applicable"
       }
     ],
     "lighting": {
-      "type": "bright",
+      "type": "bright|dark|dramatic|soft",
       "source": {"x": 0.8, "y": 0.2},
       "intensity": 0.7
     },
     "textOverlay": {
-      "text": "overlay text if needed",
+      "text": "overlay text",
       "position": {"x": 0.5, "y": 0.1},
-      "size": "large",
+      "size": "large|medium|small",
       "color": "#hex"
     }
   }
 }
 
-Use rich, vibrant hex colors. Return ONLY valid JSON.`
+Use vibrant hex colors. For faces/animals, include at least 5-10 layers and features for detail. Return ONLY valid JSON.`
 
       const response = await window.spark.llm(aiPrompt, "gpt-4o", true)
       const sceneData = JSON.parse(response)
@@ -174,6 +216,159 @@ Use rich, vibrant hex colors. Return ONLY valid JSON.`
         }
         
         ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+      }
+
+      const drawComplexSubject = () => {
+        const complexSubject = scene.complexSubject
+        if (!complexSubject) return
+        
+        const baseX = (complexSubject.position?.x || 0.5) * dimensions.width
+        const baseY = (complexSubject.position?.y || 0.5) * dimensions.height
+        const baseSize = (complexSubject.size || 0.6) * Math.min(dimensions.width, dimensions.height)
+        const baseRotation = (complexSubject.rotation || 0) * Math.PI / 180
+        
+        ctx.save()
+        ctx.translate(baseX, baseY)
+        ctx.rotate(baseRotation)
+        
+        const layers = complexSubject.layers || []
+        const sortedLayers = [...layers].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+        
+        sortedLayers.forEach((layer: any) => {
+          const layerX = (layer.position?.x || 0) * baseSize
+          const layerY = (layer.position?.y || 0) * baseSize
+          const layerSize = (layer.size || 0.3) * baseSize
+          const layerRotation = (layer.rotation || 0) * Math.PI / 180
+          const layerColor = layer.color || '#ffffff'
+          
+          ctx.save()
+          ctx.translate(layerX, layerY)
+          ctx.rotate(layerRotation)
+          
+          ctx.fillStyle = layerColor
+          ctx.strokeStyle = layerColor
+          
+          const shape = layer.shape || 'circle'
+          
+          if (shape === 'circle') {
+            ctx.beginPath()
+            ctx.arc(0, 0, layerSize / 2, 0, Math.PI * 2)
+            ctx.fill()
+          } else if (shape === 'ellipse') {
+            ctx.beginPath()
+            ctx.ellipse(0, 0, layerSize / 2, layerSize / 3, 0, 0, Math.PI * 2)
+            ctx.fill()
+          } else if (shape === 'arc') {
+            const startAngle = (layer.startAngle || 0) * Math.PI / 180
+            const endAngle = (layer.endAngle || 180) * Math.PI / 180
+            ctx.beginPath()
+            ctx.arc(0, 0, layerSize / 2, startAngle, endAngle)
+            ctx.lineWidth = layerSize * 0.1
+            ctx.stroke()
+          } else if (shape === 'curve' || shape === 'bezier') {
+            ctx.beginPath()
+            ctx.moveTo(-layerSize / 2, 0)
+            const cp1x = (layer.cp1?.x || -0.25) * layerSize
+            const cp1y = (layer.cp1?.y || -0.25) * layerSize
+            const cp2x = (layer.cp2?.x || 0.25) * layerSize
+            const cp2y = (layer.cp2?.y || -0.25) * layerSize
+            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, layerSize / 2, 0)
+            ctx.lineWidth = layerSize * 0.08
+            ctx.stroke()
+          } else if (shape === 'triangle') {
+            ctx.beginPath()
+            ctx.moveTo(0, -layerSize / 2)
+            ctx.lineTo(layerSize / 2, layerSize / 2)
+            ctx.lineTo(-layerSize / 2, layerSize / 2)
+            ctx.closePath()
+            ctx.fill()
+          } else if (shape === 'rectangle') {
+            ctx.fillRect(-layerSize / 2, -layerSize / 2, layerSize, layerSize)
+          }
+          
+          ctx.restore()
+        })
+        
+        const features = complexSubject.features || []
+        features.forEach((feature: any) => {
+          const featX = (feature.position?.x || 0) * baseSize
+          const featY = (feature.position?.y || 0) * baseSize
+          const featSize = (feature.size || 0.05) * baseSize
+          const featColor = feature.color || '#ffffff'
+          const featShape = feature.shape || 'circle'
+          
+          ctx.save()
+          ctx.fillStyle = featColor
+          ctx.strokeStyle = featColor
+          
+          if (featShape === 'circle') {
+            ctx.beginPath()
+            ctx.arc(featX, featY, featSize / 2, 0, Math.PI * 2)
+            ctx.fill()
+            
+            if (feature.detail === 'highlight') {
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'
+              ctx.beginPath()
+              ctx.arc(featX - featSize * 0.15, featY - featSize * 0.15, featSize * 0.2, 0, Math.PI * 2)
+              ctx.fill()
+            } else if (feature.detail === 'outline') {
+              ctx.lineWidth = featSize * 0.1
+              ctx.beginPath()
+              ctx.arc(featX, featY, featSize / 2, 0, Math.PI * 2)
+              ctx.stroke()
+            }
+          } else if (featShape === 'ellipse') {
+            ctx.beginPath()
+            ctx.ellipse(featX, featY, featSize / 2, featSize / 3, 0, 0, Math.PI * 2)
+            ctx.fill()
+          } else if (featShape === 'line') {
+            ctx.lineWidth = featSize * 0.1
+            ctx.beginPath()
+            ctx.moveTo(featX - featSize / 2, featY)
+            ctx.lineTo(featX + featSize / 2, featY)
+            ctx.stroke()
+          } else if (featShape === 'arc') {
+            const startAngle = (feature.startAngle || 0) * Math.PI / 180
+            const endAngle = (feature.endAngle || 180) * Math.PI / 180
+            ctx.lineWidth = featSize * 0.15
+            ctx.beginPath()
+            ctx.arc(featX, featY, featSize / 2, startAngle, endAngle)
+            ctx.stroke()
+          }
+          
+          ctx.restore()
+        })
+        
+        const shading = complexSubject.shading || []
+        shading.forEach((shade: any) => {
+          const shadeX = (shade.position?.x || 0.5) * baseSize
+          const shadeY = (shade.position?.y || 0.5) * baseSize
+          const shadeSize = (shade.size || 0.2) * baseSize
+          const shadeColor = shade.color || '#000000'
+          const opacity = shade.opacity || 0.3
+          
+          ctx.save()
+          
+          const gradient = ctx.createRadialGradient(
+            shadeX, shadeY, 0,
+            shadeX, shadeY, shadeSize
+          )
+          
+          if (shade.type === 'shadow') {
+            gradient.addColorStop(0, `${shadeColor}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`)
+            gradient.addColorStop(1, `${shadeColor}00`)
+          } else if (shade.type === 'highlight') {
+            gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`)
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+          }
+          
+          ctx.fillStyle = gradient
+          ctx.fillRect(shadeX - shadeSize, shadeY - shadeSize, shadeSize * 2, shadeSize * 2)
+          
+          ctx.restore()
+        })
+        
+        ctx.restore()
       }
 
       const drawMainSubject = () => {
@@ -365,7 +560,13 @@ Use rich, vibrant hex colors. Return ONLY valid JSON.`
       }
 
       drawBackground()
-      drawMainSubject()
+      
+      if (scene.complexSubject) {
+        drawComplexSubject()
+      } else {
+        drawMainSubject()
+      }
+      
       drawElements()
       applyLighting()
       drawTextOverlay()
@@ -420,7 +621,7 @@ Use rich, vibrant hex colors. Return ONLY valid JSON.`
             Text to Image Generator
           </CardTitle>
           <CardDescription>
-            Create images from text descriptions using AI
+            Create images from text descriptions using AI - now with advanced techniques for faces and animals
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -428,12 +629,54 @@ Use rich, vibrant hex colors. Return ONLY valid JSON.`
             <Label htmlFor="prompt">Prompt</Label>
             <Textarea
               id="prompt"
-              placeholder="Describe the image you want to create..."
+              placeholder="Describe the image you want to create... Try: 'a cat face with green eyes' or 'portrait of a wolf' or 'smiling human face'"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
               className="resize-none"
             />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPrompt("portrait of a cat with blue eyes")}
+                className="text-xs"
+              >
+                Cat Face
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPrompt("side view of a wolf howling at the moon")}
+                className="text-xs"
+              >
+                Wolf Portrait
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPrompt("frontal view of a human face with a gentle smile")}
+                className="text-xs"
+              >
+                Human Face
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPrompt("cute dog face with floppy ears")}
+                className="text-xs"
+              >
+                Dog Face
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPrompt("majestic lion with a flowing mane")}
+                className="text-xs"
+              >
+                Lion Portrait
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -499,6 +742,15 @@ Use rich, vibrant hex colors. Return ONLY valid JSON.`
               <span>High</span>
               <span>Ultra</span>
             </div>
+          </div>
+
+          <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
+            <p className="text-xs text-foreground mb-1">
+              <strong>✨ Complex Subject Support:</strong>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              The AI uses advanced canvas techniques for faces and animals, including layered anatomical shapes, precise feature placement, and realistic shading for detailed results.
+            </p>
           </div>
 
           <Button
