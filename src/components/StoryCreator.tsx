@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash } from "@phosphor-icons/react"
+import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -92,6 +92,115 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
     { value: "medium", label: "Medium (~1000 words/chapter)" },
     { value: "long", label: "Long (~1500 words/chapter)" }
   ]
+
+  const templates = [
+    {
+      id: "epic-fantasy",
+      name: "Epic Fantasy Quest",
+      genre: "fantasy",
+      tone: "adventurous",
+      description: "A hero's journey through magical realms filled with mythical creatures and ancient prophecies",
+      emoji: "🐉"
+    },
+    {
+      id: "noir-mystery",
+      name: "Noir Detective",
+      genre: "mystery",
+      tone: "dark",
+      description: "A gritty detective story set in rain-soaked streets where shadows hide deadly secrets",
+      emoji: "🕵️"
+    },
+    {
+      id: "space-opera",
+      name: "Space Opera",
+      genre: "sci-fi",
+      tone: "dramatic",
+      description: "An interstellar saga of warring factions, alien civilizations, and cosmic destiny",
+      emoji: "🚀"
+    },
+    {
+      id: "romantic-comedy",
+      name: "Romantic Comedy",
+      genre: "romance",
+      tone: "lighthearted",
+      description: "A heartwarming tale of love, laughter, and unexpected connections",
+      emoji: "💕"
+    },
+    {
+      id: "psychological-thriller",
+      name: "Psychological Thriller",
+      genre: "thriller",
+      tone: "suspenseful",
+      description: "A mind-bending journey where reality blurs and nothing is as it seems",
+      emoji: "🧠"
+    },
+    {
+      id: "gothic-horror",
+      name: "Gothic Horror",
+      genre: "horror",
+      tone: "mysterious",
+      description: "A chilling tale of ancient curses, haunted mansions, and things that lurk in the dark",
+      emoji: "🏰"
+    },
+    {
+      id: "whimsical-adventure",
+      name: "Whimsical Adventure",
+      genre: "adventure",
+      tone: "whimsical",
+      description: "A delightfully quirky journey filled with peculiar characters and enchanting surprises",
+      emoji: "🎪"
+    },
+    {
+      id: "historical-drama",
+      name: "Historical Drama",
+      genre: "historical",
+      tone: "dramatic",
+      description: "An epic period piece exploring pivotal moments and human struggles through time",
+      emoji: "⚔️"
+    },
+    {
+      id: "uplifting-inspiration",
+      name: "Uplifting Journey",
+      genre: "contemporary",
+      tone: "inspirational",
+      description: "An inspiring story of personal growth, resilience, and triumph over adversity",
+      emoji: "✨"
+    },
+    {
+      id: "dark-comedy",
+      name: "Dark Comedy",
+      genre: "comedy",
+      tone: "humorous",
+      description: "A wickedly funny tale that finds humor in the absurdity of life's darker moments",
+      emoji: "😈"
+    },
+    {
+      id: "melancholic-romance",
+      name: "Bittersweet Romance",
+      genre: "romance",
+      tone: "melancholic",
+      description: "A poignant love story exploring the beauty and pain of deep emotional connections",
+      emoji: "🌙"
+    },
+    {
+      id: "cyber-thriller",
+      name: "Cyberpunk Thriller",
+      genre: "sci-fi",
+      tone: "suspenseful",
+      description: "A high-tech noir set in neon-lit streets where hackers battle mega-corporations",
+      emoji: "💻"
+    }
+  ]
+
+  const applyTemplate = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId)
+    if (!template) return
+
+    setGenre(template.genre)
+    setTone(template.tone)
+    setStoryDescription(template.description)
+    toast.success(`Applied "${template.name}" template`)
+  }
 
   const handleGenerate = async () => {
     if (!storyTitle.trim()) {
@@ -536,6 +645,51 @@ Return only the chapter content as plain text, no JSON formatting.`
               </TabsContent>
 
               <TabsContent value="setup" className="mt-0 space-y-6">
+                <Card className="border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MagicWand size={18} weight="fill" className="text-accent" />
+                      Quick Start Templates
+                    </CardTitle>
+                    <CardDescription>
+                      Choose a template to get started quickly with pre-filled genre and tone
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {templates.map((template) => (
+                        <motion.button
+                          key={template.id}
+                          onClick={() => applyTemplate(template.id)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:border-accent/50 hover:bg-accent/5 transition-all text-left group"
+                        >
+                          <span className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
+                            {template.emoji}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm mb-1 flex items-center gap-2">
+                              {template.name}
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {template.description}
+                            </p>
+                            <div className="flex gap-1.5 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {template.genre}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {template.tone}
+                              </Badge>
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="story-title">Story Title *</Label>
