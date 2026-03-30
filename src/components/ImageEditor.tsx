@@ -20,7 +20,10 @@ import {
   Square,
   Eraser,
   FloppyDisk,
-  Upload
+  Upload,
+  ArrowClockwise,
+  ArrowCounterClockwise as RotateLeft,
+  ArrowsClockwise as RotateRight
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
@@ -46,6 +49,10 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
   const [prompt, setPrompt] = useState("")
   const [enhancePrompt, setEnhancePrompt] = useState("")
   const [isDraggingImage, setIsDraggingImage] = useState(false)
+  const [isCropping, setIsCropping] = useState(false)
+  const [cropStart, setCropStart] = useState<{ x: number; y: number } | null>(null)
+  const [cropEnd, setCropEnd] = useState<{ x: number; y: number } | null>(null)
+  const [cropRect, setCropRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
 
   useEffect(() => {
     if (open && imageUrl && mode === "edit") {
@@ -356,6 +363,167 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setIsDraggingImage(false)
   }
 
+  const handleRotate90 = (direction: "left" | "right") => {
+    const newRotation = direction === "left" 
+      ? (rotation - 90 + 360) % 360 
+      : (rotation + 90) % 360
+    setRotation(newRotation)
+    toast.success(`Rotated ${direction === "left" ? "left" : "right"} 90°`)
+  }
+
+  const startCrop = () => {
+    if (!originalImage) {
+      toast.error("No image to crop")
+      return
+    }
+    setIsCropping(true)
+    setCropStart(null)
+    setCropEnd(null)
+    setCropRect(null)
+    toast.info("Click and drag on the image to select crop area")
+  }
+
+  const cancelCrop = () => {
+    setIsCropping(false)
+    setCropStart(null)
+    setCropEnd(null)
+    setCropRect(null)
+  }
+
+  const applyCrop = () => {
+    if (!cropRect || !originalImage) {
+      toast.error("No crop area selected")
+      return
+    }
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const tempCanvas = document.createElement("canvas")
+    const tempCtx = tempCanvas.getContext("2d")
+    if (!tempCtx) return
+
+    tempCanvas.width = originalImage.width
+    tempCanvas.height = originalImage.height
+    tempCtx.drawImage(originalImage, 0, 0)
+
+    const croppedCanvas = document.createElement("canvas")
+    const croppedCtx = croppedCanvas.getContext("2d")
+    if (!croppedCtx) return
+
+    croppedCanvas.width = cropRect.width
+    croppedCanvas.height = cropRect.height
+
+    croppedCtx.drawImage(
+      tempCanvas,
+      cropRect.x,
+      cropRect.y,
+      cropRect.width,
+      cropRect.height,
+      0,
+      0,
+      cropRect.width,
+      cropRect.height
+    )
+
+    const croppedImage = new Image()
+    croppedImage.onload = () => {
+      setOriginalImage(croppedImage)
+      drawImage(croppedImage)
+      setIsCropping(false)
+      setCropStart(null)
+      setCropEnd(null)
+      setCropRect(null)
+      toast.success("Image cropped successfully")
+    }
+    croppedImage.src = croppedCanvas.toDataURL()
+  }
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isCropping) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
+
+    setCropStart({ x, y })
+    setCropEnd({ x, y })
+  }
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isCropping || !cropStart) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
+
+    setCropEnd({ x, y })
+
+    const minX = Math.min(cropStart.x, x)
+    const minY = Math.min(cropStart.y, y)
+    const maxX = Math.max(cropStart.x, x)
+    const maxY = Math.max(cropStart.y, y)
+
+    setCropRect({
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    })
+  }
+
+  const handleCanvasMouseUp = () => {
+    if (!isCropping || !cropRect) return
+
+    if (cropRect.width < 10 || cropRect.height < 10) {
+      toast.error("Crop area too small. Please select a larger area.")
+      setCropStart(null)
+      setCropEnd(null)
+      setCropRect(null)
+      return
+    }
+  }
+
+  useEffect(() => {
+    if (!isCropping || !cropRect || !originalImage) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    drawImage(originalImage)
+
+    ctx.strokeStyle = "rgba(138, 118, 255, 1)"
+    ctx.lineWidth = 3
+    ctx.setLineDash([10, 5])
+    ctx.strokeRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height)
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)"
+    ctx.fillRect(0, 0, canvas.width, cropRect.y)
+    ctx.fillRect(0, cropRect.y, cropRect.x, cropRect.height)
+    ctx.fillRect(cropRect.x + cropRect.width, cropRect.y, canvas.width - cropRect.x - cropRect.width, cropRect.height)
+    ctx.fillRect(0, cropRect.y + cropRect.height, canvas.width, canvas.height - cropRect.y - cropRect.height)
+
+    ctx.setLineDash([])
+  }, [cropRect, isCropping])
+
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -439,12 +607,80 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
                     )}
                     <canvas
                       ref={canvasRef}
-                      className="max-w-full max-h-[500px] rounded-lg shadow-lg"
+                      className={`max-w-full max-h-[500px] rounded-lg shadow-lg ${isCropping ? 'cursor-crosshair' : 'cursor-default'}`}
+                      onMouseDown={handleCanvasMouseDown}
+                      onMouseMove={handleCanvasMouseMove}
+                      onMouseUp={handleCanvasMouseUp}
                     />
                   </div>
 
                   <div className="lg:w-80 space-y-6">
+                    {isCropping && (
+                      <div className="p-4 bg-accent/10 border-2 border-accent rounded-lg space-y-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Crop size={20} className="text-accent" weight="fill" />
+                          <span className="font-semibold text-accent">Crop Mode Active</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Click and drag on the image to select the area you want to keep.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={applyCrop}
+                            disabled={!cropRect}
+                            className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
+                            size="sm"
+                          >
+                            Apply Crop
+                          </Button>
+                          <Button
+                            onClick={cancelCrop}
+                            variant="outline"
+                            className="flex-1"
+                            size="sm"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Transform Tools</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={startCrop}
+                          disabled={!originalImage || isCropping}
+                          variant="outline"
+                          className="border-accent/50 text-accent hover:bg-accent/10"
+                          size="sm"
+                        >
+                          <Crop size={16} className="mr-2" weight="fill" />
+                          Crop
+                        </Button>
+                        <Button
+                          onClick={() => handleRotate90("left")}
+                          disabled={!originalImage || isCropping}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <RotateLeft size={16} className="mr-2" weight="bold" />
+                          90° Left
+                        </Button>
+                        <Button
+                          onClick={() => handleRotate90("right")}
+                          disabled={!originalImage || isCropping}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <RotateRight size={16} className="mr-2" weight="bold" />
+                          90° Right
+                        </Button>
+                      </div>
+                    </div>
+
                     <div className="space-y-4">
+                      <Label className="text-base font-semibold">Adjustments</Label>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <Label className="flex items-center gap-2">
