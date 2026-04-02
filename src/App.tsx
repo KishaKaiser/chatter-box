@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, ChatsCircle, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
+import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
+import mouthIcon from '@/assets/images/mouth-icon.svg'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -667,7 +668,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-background p-3 rounded-xl">
-                <ChatsCircle size={40} className="text-white" weight="duotone" />
+                <img src={mouthIcon} alt="Chat" className="w-10 h-10 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
@@ -729,7 +730,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
         {threadList.length > 0 && activeTab === "chat" && (
           <div className="mb-3">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <ChatsCircle size={16} weight="fill" />
+              <Chat size={16} weight="fill" />
               <span className="text-sm font-medium">
                 {threadList.find(t => t.id === activeThreadId)?.title || "Chat"}
               </span>
@@ -742,7 +743,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
             <div className="border-b border-border px-4 pt-4">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="chat" className="gap-2">
-                  <ChatsCircle size={18} weight="fill" />
+                  <Chat size={18} weight="fill" />
                   {!isMobile && "Chat"}
                 </TabsTrigger>
                 <TabsTrigger value="create-image" className="gap-2">
@@ -789,7 +790,7 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                     {currentMessages.length === 0 && (
                       <div className="text-center py-12">
                         <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                          <ChatsCircle size={32} className="text-primary" weight="fill" />
+                          <img src={mouthIcon} alt="Chat" className="w-8 h-8" />
                         </div>
                         <h3 className="text-lg font-semibold mb-2">Welcome to {currentUser?.chatbotName || "Chatter Box"}!</h3>
                         <p className="text-muted-foreground text-sm max-w-md mx-auto">
