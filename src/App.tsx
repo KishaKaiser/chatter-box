@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
-import { useKV } from "@github/spark/hooks"
+import { useLocalStorage } from "@/hooks/use-local-storage"
+import { api, getToken, removeToken } from "@/lib/api"
 import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import mouthIcon from '@/assets/images/mouth.jpg'
@@ -26,18 +27,17 @@ import { getPersonalityPrompt, PERSONALITY_PRESETS } from "@/lib/personality-pre
 
 function App() {
   const isMobile = useIsMobile()
-  const [currentUser, setCurrentUser] = useKV<UserAccountType | null>("current-user", null)
-  const [allAccounts, setAllAccounts] = useKV<UserAccountType[]>("user-accounts", [])
+  const [currentUser, setCurrentUser] = useLocalStorage<UserAccountType | null>("current-user", null)
   const userKey = (currentUser?.id || "guest")
-  const [threads, setThreads] = useKV<ConversationThread[]>(`conversation-threads-${userKey}`, [])
-  const [currentThreadId, setCurrentThreadId] = useKV<string>(`current-thread-${userKey}`, "")
+  const [threads, setThreads] = useLocalStorage<ConversationThread[]>(`conversation-threads-${userKey}`, [])
+  const [currentThreadId, setCurrentThreadId] = useLocalStorage<string>(`current-thread-${userKey}`, "")
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
   const [isDraggingFile, setIsDraggingFile] = useState(false)
-  const [webSearchEnabled, setWebSearchEnabled] = useKV<boolean>(`web-search-enabled-${userKey}`, false)
-  const [rememberWebSearch, setRememberWebSearch] = useKV<boolean>(`remember-web-search-${userKey}`, false)
-  const [webSearchMemory, setWebSearchMemory] = useKV<string>(`web-search-memory-${userKey}`, "")
+  const [webSearchEnabled, setWebSearchEnabled] = useLocalStorage<boolean>(`web-search-enabled-${userKey}`, false)
+  const [rememberWebSearch, setRememberWebSearch] = useLocalStorage<boolean>(`remember-web-search-${userKey}`, false)
+  const [webSearchMemory, setWebSearchMemory] = useLocalStorage<string>(`web-search-memory-${userKey}`, "")
   const [isSearching, setIsSearching] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"chat" | "create-image" | "edit-image" | "story">("chat")
@@ -49,6 +49,31 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // Restore session from stored JWT on app load
+  useEffect(() => {
+    const token = getToken()
+    if (token && !currentUser) {
+      api.user.me().then((apiUser) => {
+        setCurrentUser({
+          id: apiUser.id,
+          username: apiUser.username,
+          email: apiUser.email,
+          createdAt: new Date(apiUser.createdAt).getTime(),
+          displayName: apiUser.displayName,
+          avatarUrl: apiUser.avatarUrl,
+          preferredName: apiUser.preferredName,
+          chatbotName: apiUser.chatbotName,
+          personalityPreset: apiUser.personalityPreset,
+        })
+      }).catch(() => {
+        // Token is invalid or expired – clear it
+        removeToken()
+        setCurrentUser(null)
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const threadList = threads || []
@@ -102,8 +127,8 @@ function App() {
   const threadList = threads || []
   const activeThreads = threadList.filter(t => !t.archived)
   const activeThreadId = currentThreadId || activeThreads[0]?.id || ""
-  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
-  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
+  const [messages, setMessages] = useLocalStorage<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
+  const [knowledgeFiles, setKnowledgeFiles] = useLocalStorage<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
   
   const {
     isListening,
@@ -636,16 +661,12 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
   }
 
   const handleLogout = () => {
+    removeToken()
     setCurrentUser(null)
   }
 
   const handleUpdateProfile = (updatedUser: UserAccountType) => {
     setCurrentUser(updatedUser)
-    setAllAccounts((current) => 
-      (current || []).map((acc) => 
-        acc.id === updatedUser.id ? updatedUser : acc
-      )
-    )
   }
 
   const handleAddFile = (file: KnowledgeFile) => {

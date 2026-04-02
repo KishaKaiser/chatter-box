@@ -3,15 +3,17 @@
     "private": true,
     "version": "0.0.0",
     "type": "module",
-   "scripts": {
-  "dev": "vite",
-  "kill": "fuser -k 5000/tcp",
-  "build": "tsc -b --noCheck && vite build",
-  "lint": "eslint .",
-  "optimize": "vite optimize",
-  "preview": "vite preview --host 0.0.0.0 --port 4173",
-  "start": "npm run preview"
-},
+    "scripts": {
+        "dev:frontend": "vite",
+        "dev:backend": "npm --prefix backend run dev",
+        "dev": "concurrently -k -p \"[{name}]\" -n \"frontend,backend\" -c \"cyan,yellow\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+        "kill": "fuser -k 5000/tcp",
+        "build": "tsc -b --noCheck && vite build",
+        "lint": "eslint .",
+        "optimize": "vite optimize",
+        "preview": "vite preview --host 0.0.0.0 --port 4173",
+        "start": "npm run preview"
+    },
     "dependencies": {
         "@github/spark": ">=0.43.1 <1",
         "@heroicons/react": "^2.2.0",
@@ -83,6 +85,7 @@
         "@types/react": "^19.0.10",
         "@types/react-dom": "^19.0.4",
         "@vitejs/plugin-react-swc": "^4.3.0",
+        "concurrently": "^9.2.1",
         "eslint": "^9.28.0",
         "eslint-plugin-react-hooks": "^5.2.0",
         "eslint-plugin-react-refresh": "^0.4.19",
