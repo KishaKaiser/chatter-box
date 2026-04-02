@@ -1,9 +1,7 @@
 import { useState } from "react"
-import { useKV } from "@github/spark/hooks"
 import { SignIn, SignOut, User as UserIcon, Gear, CaretDown, Globe } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
   Dialog,
@@ -22,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
+import { api, setToken, removeToken } from "@/lib/api"
 
 export interface UserAccount {
   id: string
@@ -47,7 +46,6 @@ interface UserAccountProps {
 }
 
 export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, webSearchEnabled, onToggleWebSearch, rememberWebSearch, onToggleRememberWebSearch }: UserAccountProps) {
-  const [allAccounts, setAllAccounts] = useKV<UserAccount[]>("user-accounts", [])
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
@@ -60,20 +58,27 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
       return
     }
 
-    const accounts = allAccounts || []
-    const existingUser = accounts.find(
-      (acc) => acc.email.toLowerCase() === email.toLowerCase()
-    )
-
-    if (!existingUser) {
-      toast.error("Account not found. Please sign up first.")
-      return
+    try {
+      const { token, user } = await api.auth.login({ email: email.trim(), password })
+      setToken(token)
+      const userAccount: UserAccount = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: new Date(user.createdAt).getTime(),
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        preferredName: user.preferredName,
+        chatbotName: user.chatbotName,
+        personalityPreset: user.personalityPreset,
+      }
+      onLogin(userAccount)
+      toast.success(`Welcome back, ${user.username}!`)
+      setOpen(false)
+      resetForm()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed")
     }
-
-    onLogin(existingUser)
-    toast.success(`Welcome back, ${existingUser.username}!`)
-    setOpen(false)
-    resetForm()
   }
 
   const handleSignup = async () => {
@@ -97,31 +102,35 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
       return
     }
 
-    const accounts = allAccounts || []
-    const emailExists = accounts.some(
-      (acc) => acc.email.toLowerCase() === email.toLowerCase()
-    )
-
-    if (emailExists) {
-      toast.error("An account with this email already exists")
-      return
+    try {
+      const { token, user } = await api.auth.register({
+        email: email.trim(),
+        password,
+        username: username.trim(),
+      })
+      setToken(token)
+      const userAccount: UserAccount = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: new Date(user.createdAt).getTime(),
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        preferredName: user.preferredName,
+        chatbotName: user.chatbotName,
+        personalityPreset: user.personalityPreset,
+      }
+      onLogin(userAccount)
+      toast.success(`Account created! Welcome, ${user.username}!`)
+      setOpen(false)
+      resetForm()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign up failed")
     }
-
-    const newUser: UserAccount = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      username: username.trim(),
-      email: email.toLowerCase().trim(),
-      createdAt: Date.now(),
-    }
-
-    setAllAccounts((current) => [...(current || []), newUser])
-    onLogin(newUser)
-    toast.success(`Account created! Welcome, ${newUser.username}!`)
-    setOpen(false)
-    resetForm()
   }
 
   const handleLogout = () => {
+    removeToken()
     onLogout()
     toast.success("Logged out successfully")
   }
