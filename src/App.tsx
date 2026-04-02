@@ -667,8 +667,8 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-background p-3 rounded-xl">
-                <img src={mouthIcon} alt="Chat" className="w-10 h-10 text-white" />
+              <div className="bg-background p-2 rounded-xl">
+                <img src={mouthIcon} alt="Chat" className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
