@@ -667,8 +667,8 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-background p-2 rounded-xl">
-                <img src={mouthIcon} alt="Chat" className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg" />
+              <div className="bg-background p-3 rounded-xl">
+                <img src={mouthIcon} alt="Chat" className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "'Henny Penny', cursive", letterSpacing: '-0.02em' }}>
@@ -789,8 +789,8 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
                   <div className="space-y-4">
                     {currentMessages.length === 0 && (
                       <div className="text-center py-12">
-                        <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                          <img src={mouthIcon} alt="Chat" className="w-8 h-8" />
+                        <div className="w-24 h-24 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                          <img src={mouthIcon} alt="Chat" className="w-16 h-16 object-cover rounded-full" />
                         </div>
                         <h3 className="text-lg font-semibold mb-2">Welcome to {currentUser?.chatbotName || "Chatter Box"}!</h3>
                         <p className="text-muted-foreground text-sm max-w-md mx-auto">
