@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
 import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
-import mouthIcon from '@/assets/images/mouth-icon.svg'
+import mouthIcon from '@/assets/images/mouth.jpg'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
