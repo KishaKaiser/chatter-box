@@ -26,7 +26,8 @@ import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
 import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
-import { useKV } from "@github/spark/hooks"
+import { useLocalStorage } from "@/hooks/use-local-storage"
+import { api, getToken } from "@/lib/api"
 import { PERSONALITY_PRESETS } from "@/lib/personality-presets"
 
 export interface CustomVoiceFile {
@@ -135,6 +136,19 @@ export function ProfileSettings({
       chatbotName: chatbotName.trim(),
       avatarUrl: selectedAvatar || undefined,
       personalityPreset: selectedPersonality,
+    }
+
+    // Persist profile to the backend if authenticated
+    if (getToken()) {
+      api.user.updateMe({
+        displayName: updatedUser.displayName,
+        preferredName: updatedUser.preferredName,
+        chatbotName: updatedUser.chatbotName,
+        avatarUrl: updatedUser.avatarUrl,
+        personalityPreset: updatedUser.personalityPreset,
+      }).catch((err: unknown) => {
+        console.error("Failed to persist profile to backend:", err)
+      })
     }
 
     onUpdateProfile(updatedUser)
@@ -717,12 +731,12 @@ interface VoiceTabContentProps {
 function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
   const userKey = currentUser.id
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
-  const [voiceSettings, setVoiceSettings] = useKV<VoiceSettings>(`voice-settings-${userKey}`, {
+  const [voiceSettings, setVoiceSettings] = useLocalStorage<VoiceSettings>(`voice-settings-${userKey}`, {
     rate: 1.0,
     pitch: 1.0,
     volume: 1.0,
   })
-  const [customVoiceFiles, setCustomVoiceFiles] = useKV<CustomVoiceFile[]>(`custom-voice-files-${userKey}`, [])
+  const [customVoiceFiles, setCustomVoiceFiles] = useLocalStorage<CustomVoiceFile[]>(`custom-voice-files-${userKey}`, [])
   const [testText, setTestText] = useState("Hello, I am your AI assistant. This is how I sound.")
   const [isTesting, setIsTesting] = useState(false)
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
