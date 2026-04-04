@@ -27,16 +27,24 @@ import { getPersonalityPrompt, PERSONALITY_PRESETS } from "@/lib/personality-pre
 function App() {
   const isMobile = useIsMobile()
   const [currentUser, setCurrentUser] = useKV<UserAccountType | null>("current-user", null)
-  const userKey = (currentUser?.id || "guest")
+  const userKey = currentUser?.id || "guest"
   const [threads, setThreads] = useKV<ConversationThread[]>(`conversation-threads-${userKey}`, [])
   const [currentThreadId, setCurrentThreadId] = useKV<string>(`current-thread-${userKey}`, "")
+  
+  const threadList = threads || []
+  const activeThreads = threadList.filter(t => !t.archived)
+  const safeThreadId = currentThreadId || activeThreads[0]?.id || "default"
+  
+  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}-${safeThreadId}`, [])
+  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
+  const [webSearchEnabled, setWebSearchEnabled] = useKV<boolean>(`web-search-enabled-${userKey}`, false)
+  const [rememberWebSearch, setRememberWebSearch] = useKV<boolean>(`remember-web-search-${userKey}`, false)
+  const [webSearchMemory, setWebSearchMemory] = useKV<string>(`web-search-memory-${userKey}`, "")
+  
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
   const [isDraggingFile, setIsDraggingFile] = useState(false)
-  const [webSearchEnabled, setWebSearchEnabled] = useKV<boolean>(`web-search-enabled-${userKey}`, false)
-  const [rememberWebSearch, setRememberWebSearch] = useKV<boolean>(`remember-web-search-${userKey}`, false)
-  const [webSearchMemory, setWebSearchMemory] = useKV<string>(`web-search-memory-${userKey}`, "")
   const [isSearching, setIsSearching] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"chat" | "create-image" | "edit-image" | "story">("chat")
@@ -44,12 +52,11 @@ function App() {
   const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("create")
   const [imageToEdit, setImageToEdit] = useState<string | undefined>(undefined)
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false)
+  
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
-
-
 
   useEffect(() => {
     const threadList = threads || []
@@ -98,13 +105,9 @@ function App() {
     }
 
     autoArchiveOldThreads()
-  }, [])
+  }, [setThreads])
 
-  const threadList = threads || []
-  const activeThreads = threadList.filter(t => !t.archived)
-  const activeThreadId = currentThreadId || activeThreads[0]?.id || ""
-  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
-  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
+  const activeThreadId = safeThreadId
   
   const {
     isListening,
