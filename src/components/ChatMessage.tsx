@@ -196,7 +196,7 @@ export function ChatMessage({ message, onRegenerate, onImageClick, userKey = "gu
                       <DotsThree size={18} weight="bold" className="text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={handleCopy} className="cursor-pointer gap-2">
                       <Copy size={16} weight="bold" />
                       <span>Copy</span>

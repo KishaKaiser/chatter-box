@@ -179,7 +179,7 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-72">
           {onToggleWebSearch && (
             <>
               <DropdownMenuItem 

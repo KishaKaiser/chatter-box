@@ -572,7 +572,7 @@ Return only the chapter content as plain text, no JSON formatting.`
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+      <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <div className="flex items-center justify-between">
             <div>
