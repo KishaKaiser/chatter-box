@@ -737,6 +737,7 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
     volume: 1.0,
   })
   const [customVoiceFiles, setCustomVoiceFiles] = useLocalStorage<CustomVoiceFile[]>(`custom-voice-files-${userKey}`, [])
+  const [selectedVoiceFileId, setSelectedVoiceFileId] = useLocalStorage<string | null>(`selected-voice-file-${userKey}`, null)
   const [testText, setTestText] = useState("Hello, I am your AI assistant. This is how I sound.")
   const [isTesting, setIsTesting] = useState(false)
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
@@ -892,8 +893,24 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
       audioRef.current?.pause()
       setPlayingVoiceId(null)
     }
+    if (selectedVoiceFileId === id) {
+      setSelectedVoiceFileId(null)
+    }
     setCustomVoiceFiles((current) => (current || []).filter((f) => f.id !== id))
     toast.success("Voice file deleted")
+  }
+
+  const handleSelectVoiceFile = (id: string) => {
+    setSelectedVoiceFileId(id)
+    const voiceFile = voiceFiles.find(f => f.id === id)
+    if (voiceFile) {
+      toast.success(`Now using "${voiceFile.name}" as bot voice`)
+    }
+  }
+
+  const handleDeselectVoiceFile = () => {
+    setSelectedVoiceFileId(null)
+    toast.success("Switched back to text-to-speech voice")
   }
 
   const formatDuration = (seconds: number) => {
@@ -1090,7 +1107,7 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
                 Custom Voice Files
               </h4>
               <p className="text-xs text-muted-foreground mt-1">
-                Upload audio files to use as custom voice responses
+                Upload audio files to use as bot voice responses. Click "Use" to activate a voice.
               </p>
             </div>
             <Badge variant="secondary" className="text-xs">
@@ -1118,48 +1135,72 @@ function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
           {voiceFiles.length > 0 ? (
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               <AnimatePresence>
-                {voiceFiles.map((voiceFile) => (
-                  <motion.div
-                    key={voiceFile.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg group hover:bg-muted/70 transition-colors"
-                  >
-                    <div className="text-primary">
-                      <MusicNote size={20} weight="fill" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{voiceFile.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {voiceFile.duration ? formatDuration(voiceFile.duration) : "Unknown"} · {new Date(voiceFile.uploadedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 hover:bg-accent/20"
-                      onClick={() => handlePlayVoiceFile(voiceFile)}
-                      title={playingVoiceId === voiceFile.id ? "Stop" : "Play"}
+                {voiceFiles.map((voiceFile) => {
+                  const isSelected = selectedVoiceFileId === voiceFile.id
+                  return (
+                    <motion.div
+                      key={voiceFile.id}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ duration: 0.2 }}
+                      className={`flex items-center gap-3 p-3 rounded-lg group transition-all ${
+                        isSelected 
+                          ? "bg-accent/20 border-2 border-accent" 
+                          : "bg-muted/50 hover:bg-muted/70 border-2 border-transparent"
+                      }`}
                     >
-                      {playingVoiceId === voiceFile.id ? (
-                        <Pause size={16} weight="fill" className="text-accent" />
-                      ) : (
-                        <Play size={16} weight="fill" className="text-accent" />
-                      )}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
-                      onClick={() => handleDeleteVoiceFile(voiceFile.id)}
-                      title="Delete"
-                    >
-                      <Trash size={16} weight="fill" className="text-destructive" />
-                    </Button>
-                  </motion.div>
-                ))}
+                      <div className={isSelected ? "text-accent" : "text-primary"}>
+                        <MusicNote size={20} weight="fill" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{voiceFile.name}</p>
+                          {isSelected && (
+                            <Badge variant="secondary" className="text-xs bg-accent/20 text-accent border-accent">
+                              Active
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {voiceFile.duration ? formatDuration(voiceFile.duration) : "Unknown"} · {new Date(voiceFile.uploadedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={isSelected ? "default" : "outline"}
+                        className={isSelected 
+                          ? "bg-accent text-accent-foreground hover:bg-accent/90" 
+                          : "border-accent/50 text-accent hover:bg-accent/10"}
+                        onClick={() => isSelected ? handleDeselectVoiceFile() : handleSelectVoiceFile(voiceFile.id)}
+                      >
+                        {isSelected ? "Deselect" : "Use"}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 hover:bg-accent/20"
+                        onClick={() => handlePlayVoiceFile(voiceFile)}
+                        title={playingVoiceId === voiceFile.id ? "Stop" : "Play"}
+                      >
+                        {playingVoiceId === voiceFile.id ? (
+                          <Pause size={16} weight="fill" className="text-accent" />
+                        ) : (
+                          <Play size={16} weight="fill" className="text-accent" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                        onClick={() => handleDeleteVoiceFile(voiceFile.id)}
+                        title="Delete"
+                      >
+                        <Trash size={16} weight="fill" className="text-destructive" />
+                      </Button>
+                    </motion.div>
+                  )
+                })}
               </AnimatePresence>
             </div>
           ) : (
