@@ -1,26 +1,4 @@
-import { useEffect, useRef, useState } from "react"
-import Prism from "prismjs"
-import "prismjs/components/prism-clike"
-import "prismjs/components/prism-markup"
-import "prismjs/components/prism-css"
-import "prismjs/components/prism-javascript"
-import "prismjs/components/prism-typescript"
-import "prismjs/components/prism-jsx"
-import "prismjs/components/prism-tsx"
-import "prismjs/components/prism-python"
-import "prismjs/components/prism-java"
-import "prismjs/components/prism-c"
-import "prismjs/components/prism-cpp"
-import "prismjs/components/prism-json"
-import "prismjs/components/prism-yaml"
-import "prismjs/components/prism-go"
-import "prismjs/components/prism-rust"
-import "prismjs/components/prism-ruby"
-import "prismjs/components/prism-php"
-import "prismjs/components/prism-swift"
-import "prismjs/components/prism-kotlin"
-import "prismjs/components/prism-bash"
-import "prismjs/components/prism-sql"
+import { useState } from "react"
 import { Copy, Check } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -68,7 +46,6 @@ const languageMap: Record<string, string> = {
 }
 
 export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
-  const codeRef = useRef<HTMLElement>(null)
   const [copied, setCopied] = useState(false)
 
   const detectLanguage = (): string => {
@@ -80,11 +57,7 @@ export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
         return mappedLang
       }
       
-      if (Prism.languages[normalizedLang]) {
-        return normalizedLang
-      }
-      
-      return "plaintext"
+      return normalizedLang
     }
     
     if (fileName) {
@@ -96,25 +69,6 @@ export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
   }
 
   const lang = detectLanguage()
-
-  useEffect(() => {
-    if (codeRef.current && lang !== "plaintext") {
-      const grammar = Prism.languages[lang]
-      if (grammar) {
-        try {
-          const highlighted = Prism.highlight(code, grammar, lang)
-          codeRef.current.innerHTML = highlighted
-        } catch (error) {
-          console.warn(`Failed to highlight code with language: ${lang}`, error)
-          codeRef.current.textContent = code
-        }
-      } else {
-        codeRef.current.textContent = code
-      }
-    } else if (codeRef.current) {
-      codeRef.current.textContent = code
-    }
-  }, [code, lang])
 
   const handleCopy = async () => {
     try {
@@ -148,7 +102,7 @@ export function CodeBlock({ code, language, fileName }: CodeBlockProps) {
         </Button>
       </div>
       <pre className="!mt-0 !rounded-t-none !rounded-b-lg overflow-x-auto border border-t-0 border-border">
-        <code ref={codeRef} className={`language-${lang}`}>
+        <code className={`language-${lang}`}>
           {code}
         </code>
       </pre>
