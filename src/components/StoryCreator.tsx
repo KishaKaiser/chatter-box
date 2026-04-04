@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useKV } from "@github/spark/hooks"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,12 +60,12 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   const [currentTab, setCurrentTab] = useState<"setup" | "generate" | "view" | "saved">("saved")
   const [isGenerating, setIsGenerating] = useState(false)
   const [story, setStory] = useState<Story | null>(null)
-  const [savedStories, setSavedStories] = useLocalStorage<Story[]>("saved-stories", [])
+  const [savedStories, setSavedStories] = useKV<Story[]>("saved-stories", [])
   const [storyToDelete, setStoryToDelete] = useState<string | null>(null)
   const [editingChapter, setEditingChapter] = useState<number | null>(null)
   const [editedContent, setEditedContent] = useState("")
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false)
-  const [customTemplates, setCustomTemplates] = useLocalStorage<CustomTemplate[]>("custom-story-templates", [])
+  const [customTemplates, setCustomTemplates] = useKV<CustomTemplate[]>("custom-story-templates", [])
   
   const [storyTitle, setStoryTitle] = useState("")
   const [storyDescription, setStoryDescription] = useState("")
@@ -80,9 +80,9 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   
   const [narratingChapter, setNarratingChapter] = useState<number | null>(null)
   const [isPaused, setIsPaused] = useState(false)
-  const [selectedVoice, setSelectedVoice] = useLocalStorage<string>("narration-voice", "")
-  const [narrationRate, setNarrationRate] = useLocalStorage<number>("narration-rate", 1.0)
-  const [narrationPitch, setNarrationPitch] = useLocalStorage<number>("narration-pitch", 1.0)
+  const [selectedVoice, setSelectedVoice] = useKV<string>("narration-voice", "")
+  const [narrationRate, setNarrationRate] = useKV<number>("narration-rate", 1.0)
+  const [narrationPitch, setNarrationPitch] = useKV<number>("narration-pitch", 1.0)
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false)
   
   const { isSpeaking, isSupported, voices, speak, stop } = useTextToSpeech({

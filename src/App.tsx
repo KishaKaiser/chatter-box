@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
-import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useKV } from "@github/spark/hooks"
 import { api, getToken, removeToken } from "@/lib/api"
 import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
@@ -27,17 +27,17 @@ import { getPersonalityPrompt, PERSONALITY_PRESETS } from "@/lib/personality-pre
 
 function App() {
   const isMobile = useIsMobile()
-  const [currentUser, setCurrentUser] = useLocalStorage<UserAccountType | null>("current-user", null)
+  const [currentUser, setCurrentUser] = useKV<UserAccountType | null>("current-user", null)
   const userKey = (currentUser?.id || "guest")
-  const [threads, setThreads] = useLocalStorage<ConversationThread[]>(`conversation-threads-${userKey}`, [])
-  const [currentThreadId, setCurrentThreadId] = useLocalStorage<string>(`current-thread-${userKey}`, "")
+  const [threads, setThreads] = useKV<ConversationThread[]>(`conversation-threads-${userKey}`, [])
+  const [currentThreadId, setCurrentThreadId] = useKV<string>(`current-thread-${userKey}`, "")
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
   const [isDraggingFile, setIsDraggingFile] = useState(false)
-  const [webSearchEnabled, setWebSearchEnabled] = useLocalStorage<boolean>(`web-search-enabled-${userKey}`, false)
-  const [rememberWebSearch, setRememberWebSearch] = useLocalStorage<boolean>(`remember-web-search-${userKey}`, false)
-  const [webSearchMemory, setWebSearchMemory] = useLocalStorage<string>(`web-search-memory-${userKey}`, "")
+  const [webSearchEnabled, setWebSearchEnabled] = useKV<boolean>(`web-search-enabled-${userKey}`, false)
+  const [rememberWebSearch, setRememberWebSearch] = useKV<boolean>(`remember-web-search-${userKey}`, false)
+  const [webSearchMemory, setWebSearchMemory] = useKV<string>(`web-search-memory-${userKey}`, "")
   const [isSearching, setIsSearching] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"chat" | "create-image" | "edit-image" | "story">("chat")
@@ -55,7 +55,7 @@ function App() {
     const token = getToken()
     if (token && !currentUser) {
       api.user.me().then((apiUser) => {
-        setCurrentUser({
+        setCurrentUser((prev) => prev || {
           id: apiUser.id,
           username: apiUser.username,
           email: apiUser.email,
@@ -69,7 +69,6 @@ function App() {
       }).catch(() => {
         // Token is invalid or expired – clear it
         removeToken()
-        setCurrentUser(null)
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,8 +126,8 @@ function App() {
   const threadList = threads || []
   const activeThreads = threadList.filter(t => !t.archived)
   const activeThreadId = currentThreadId || activeThreads[0]?.id || ""
-  const [messages, setMessages] = useLocalStorage<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
-  const [knowledgeFiles, setKnowledgeFiles] = useLocalStorage<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
+  const [messages, setMessages] = useKV<Message[]>(`chat-messages-${userKey}-${activeThreadId}`, [])
+  const [knowledgeFiles, setKnowledgeFiles] = useKV<KnowledgeFile[]>(`knowledge-files-${userKey}`, [])
   
   const {
     isListening,

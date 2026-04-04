@@ -26,7 +26,7 @@ import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
 import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
-import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useKV } from "@github/spark/hooks"
 import { api, getToken } from "@/lib/api"
 import { PERSONALITY_PRESETS } from "@/lib/personality-presets"
 
@@ -731,13 +731,13 @@ interface VoiceTabContentProps {
 function VoiceTabContent({ currentUser }: VoiceTabContentProps) {
   const userKey = currentUser.id
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
-  const [voiceSettings, setVoiceSettings] = useLocalStorage<VoiceSettings>(`voice-settings-${userKey}`, {
+  const [voiceSettings, setVoiceSettings] = useKV<VoiceSettings>(`voice-settings-${userKey}`, {
     rate: 1.0,
     pitch: 1.0,
     volume: 1.0,
   })
-  const [customVoiceFiles, setCustomVoiceFiles] = useLocalStorage<CustomVoiceFile[]>(`custom-voice-files-${userKey}`, [])
-  const [selectedVoiceFileId, setSelectedVoiceFileId] = useLocalStorage<string | null>(`selected-voice-file-${userKey}`, null)
+  const [customVoiceFiles, setCustomVoiceFiles] = useKV<CustomVoiceFile[]>(`custom-voice-files-${userKey}`, [])
+  const [selectedVoiceFileId, setSelectedVoiceFileId] = useKV<string | null>(`selected-voice-file-${userKey}`, null)
   const [testText, setTestText] = useState("Hello, I am your AI assistant. This is how I sound.")
   const [isTesting, setIsTesting] = useState(false)
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useKV } from "@github/spark/hooks"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,7 +40,7 @@ const availableEmojis = [
 ]
 
 export function TemplateEditor({ open, onClose, onSelectTemplate }: TemplateEditorProps) {
-  const [customTemplates, setCustomTemplates] = useLocalStorage<CustomTemplate[]>("custom-story-templates", [])
+  const [customTemplates, setCustomTemplates] = useKV<CustomTemplate[]>("custom-story-templates", [])
   const [isCreating, setIsCreating] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<CustomTemplate | null>(null)
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)

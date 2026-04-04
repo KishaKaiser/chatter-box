@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { DotsThree } from "@phosphor-icons/react"
-import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useKV } from "@github/spark/hooks"
 
 export type MessageAttachment = {
   id: string
@@ -47,7 +47,7 @@ type ContentPart = {
 
 export function ChatMessage({ message, onRegenerate, onImageClick, userKey = "guest" }: ChatMessageProps) {
   const isBot = message.role === "bot"
-  const [voiceSettings] = useLocalStorage<VoiceSettings>(`voice-settings-${userKey}`, {
+  const [voiceSettings] = useKV<VoiceSettings>(`voice-settings-${userKey}`, {
     rate: 1.0,
     pitch: 1.0,
     volume: 1.0,
