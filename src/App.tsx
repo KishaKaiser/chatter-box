@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react"
 import { useKV } from "@github/spark/hooks"
-import { api, getToken, removeToken } from "@/lib/api"
 import { PaperPlaneRight, Sparkle, Microphone, MicrophoneSlash, DownloadSimple, Paperclip, X, Chat, Image, PaintBrush, BookOpen } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import mouthIcon from '@/assets/images/mouth.jpg'
@@ -50,29 +49,7 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  // Restore session from stored JWT on app load
-  useEffect(() => {
-    const token = getToken()
-    if (token && !currentUser) {
-      api.user.me().then((apiUser) => {
-        setCurrentUser((prev) => prev || {
-          id: apiUser.id,
-          username: apiUser.username,
-          email: apiUser.email,
-          createdAt: new Date(apiUser.createdAt).getTime(),
-          displayName: apiUser.displayName,
-          avatarUrl: apiUser.avatarUrl,
-          preferredName: apiUser.preferredName,
-          chatbotName: apiUser.chatbotName,
-          personalityPreset: apiUser.personalityPreset,
-        })
-      }).catch((error) => {
-        console.error("Failed to restore user session:", error)
-        removeToken()
-      })
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+
 
   useEffect(() => {
     const threadList = threads || []
@@ -660,7 +637,6 @@ Make the results relevant, helpful, and diverse. Include authoritative sources w
   }
 
   const handleLogout = () => {
-    removeToken()
     setCurrentUser(null)
   }
 

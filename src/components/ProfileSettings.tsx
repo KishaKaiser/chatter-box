@@ -27,7 +27,6 @@ import { StoryCreator } from "@/components/StoryCreator"
 import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
 import { useKV } from "@github/spark/hooks"
-import { api, getToken } from "@/lib/api"
 import { PERSONALITY_PRESETS } from "@/lib/personality-presets"
 
 export interface CustomVoiceFile {
@@ -136,19 +135,6 @@ export function ProfileSettings({
       chatbotName: chatbotName.trim(),
       avatarUrl: selectedAvatar || undefined,
       personalityPreset: selectedPersonality,
-    }
-
-    // Persist profile to the backend if authenticated
-    if (getToken()) {
-      api.user.updateMe({
-        displayName: updatedUser.displayName,
-        preferredName: updatedUser.preferredName,
-        chatbotName: updatedUser.chatbotName,
-        avatarUrl: updatedUser.avatarUrl,
-        personalityPreset: updatedUser.personalityPreset,
-      }).catch((err: unknown) => {
-        console.error("Failed to persist profile to backend:", err)
-      })
     }
 
     onUpdateProfile(updatedUser)

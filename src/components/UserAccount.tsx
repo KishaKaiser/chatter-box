@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
-import { api, setToken, removeToken } from "@/lib/api"
 
 export interface UserAccount {
   id: string
@@ -58,27 +57,17 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
       return
     }
 
-    try {
-      const { token, user } = await api.auth.login({ email: email.trim(), password })
-      setToken(token)
-      const userAccount: UserAccount = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        createdAt: new Date(user.createdAt).getTime(),
-        displayName: user.displayName,
-        avatarUrl: user.avatarUrl,
-        preferredName: user.preferredName,
-        chatbotName: user.chatbotName,
-        personalityPreset: user.personalityPreset,
-      }
-      onLogin(userAccount)
-      toast.success(`Welcome back, ${user.username}!`)
-      setOpen(false)
-      resetForm()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed")
+    const user: UserAccount = {
+      id: `user-${Date.now()}`,
+      username: email.split('@')[0],
+      email: email.trim(),
+      createdAt: Date.now(),
+      displayName: email.split('@')[0],
     }
+    onLogin(user)
+    toast.success(`Welcome back, ${user.username}!`)
+    setOpen(false)
+    resetForm()
   }
 
   const handleSignup = async () => {
@@ -102,35 +91,20 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
       return
     }
 
-    try {
-      const { token, user } = await api.auth.register({
-        email: email.trim(),
-        password,
-        username: username.trim(),
-      })
-      setToken(token)
-      const userAccount: UserAccount = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        createdAt: new Date(user.createdAt).getTime(),
-        displayName: user.displayName,
-        avatarUrl: user.avatarUrl,
-        preferredName: user.preferredName,
-        chatbotName: user.chatbotName,
-        personalityPreset: user.personalityPreset,
-      }
-      onLogin(userAccount)
-      toast.success(`Account created! Welcome, ${user.username}!`)
-      setOpen(false)
-      resetForm()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sign up failed")
+    const user: UserAccount = {
+      id: `user-${Date.now()}`,
+      username: username.trim(),
+      email: email.trim(),
+      createdAt: Date.now(),
+      displayName: username.trim(),
     }
+    onLogin(user)
+    toast.success(`Account created! Welcome, ${user.username}!`)
+    setOpen(false)
+    resetForm()
   }
 
   const handleLogout = () => {
-    removeToken()
     onLogout()
     toast.success("Logged out successfully")
   }
