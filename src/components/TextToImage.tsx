@@ -85,7 +85,7 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
       
       const enhancedPrompt = `Create an image of: ${prompt}. Style: ${styleModifier}. ${negativePrompt ? `Avoid: ${negativePrompt}.` : ""}`
 
-      const aiPrompt = `You are an AI image composition expert with expertise in drawing complex subjects. Analyze this image request and create detailed canvas drawing instructions:
+      const aiPrompt = window.spark.llmPrompt`You are an AI image composition expert with expertise in drawing complex subjects. Analyze this image request and create detailed canvas drawing instructions:
 
 User Request: "${enhancedPrompt}"
 

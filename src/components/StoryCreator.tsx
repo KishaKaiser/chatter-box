@@ -295,7 +295,7 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
       const chaptersCount = parseInt(numChapters)
       const lengthDesc = lengths.find(l => l.value === length)?.label || "Medium length"
       
-      const promptText = `You are a creative fiction writer. Generate a detailed story with the following specifications:
+      const promptText = window.spark.llmPrompt`You are a creative fiction writer. Generate a detailed story with the following specifications:
 
 Title: ${storyTitle}
 Description: ${storyDescription}

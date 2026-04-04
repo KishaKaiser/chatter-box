@@ -66,8 +66,8 @@ function App() {
           chatbotName: apiUser.chatbotName,
           personalityPreset: apiUser.personalityPreset,
         })
-      }).catch(() => {
-        // Token is invalid or expired – clear it
+      }).catch((error) => {
+        console.error("Failed to restore user session:", error)
         removeToken()
       })
     }
@@ -235,7 +235,7 @@ function App() {
     const userName = currentUser?.preferredName || currentUser?.displayName || currentUser?.username || "there"
     const personalityPrompt = getPersonalityPrompt(currentUser?.personalityPreset)
     
-    const promptText = `You are ${botName}, a helpful AI assistant. ${personalityPrompt}
+    const promptText = window.spark.llmPrompt`You are ${botName}, a helpful AI assistant. ${personalityPrompt}
 
 When addressing the user, call them "${userName}". You have access to the following knowledge base:
 
@@ -268,7 +268,7 @@ def example():
   }
 
   const performWebSearch = async (query: string): Promise<Array<{ title: string; snippet: string; url: string; favicon?: string }>> => {
-    const searchPrompt = `You are a web search assistant. Based on the user's query, generate 5 realistic web search results that would help answer their question.
+    const searchPrompt = window.spark.llmPrompt`You are a web search assistant. Based on the user's query, generate 5 realistic web search results that would help answer their question.
 
 User query: ${query}
 

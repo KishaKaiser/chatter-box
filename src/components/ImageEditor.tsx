@@ -306,7 +306,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setIsGenerating(true)
 
     try {
-      const promptText = `Generate a detailed image based on this description: "${prompt}". Create a vivid, high-quality visual representation.`
+      const promptText = window.spark.llmPrompt`Generate a detailed image based on this description: "${prompt}". Create a vivid, high-quality visual representation.`
       
       const response = await window.spark.llm(promptText, "gpt-4o-mini")
       
