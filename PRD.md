@@ -75,6 +75,13 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - Progression: Open settings → Personality tab → Browse preset cards with descriptions and traits → Click desired personality → Preview system prompt → Save changes → Bot immediately adopts new communication style in responses
 - Success criteria: Personality selection persists per user, bot responses clearly reflect selected style, smooth transition between personalities, visual feedback shows active selection
 
+**AI Model Selection**
+- Functionality: Choose from multiple AI models (GPT-4o Mini, GPT-4o) with different speed, quality, and performance characteristics
+- Purpose: Allows users to select the AI model that best fits their needs - fast responses for quick questions or higher quality for complex reasoning
+- Trigger: Click settings → Navigate to Profile tab → Select AI Model dropdown
+- Progression: Open settings → Profile tab → Click AI model dropdown → View available models with descriptions → See speed and quality badges → Select preferred model → Save changes → Bot immediately uses selected model for all future responses
+- Success criteria: Model selection persists per user, responses use the selected model, visual indicators show model characteristics (speed/quality), smooth model switching without errors
+
 **Code Syntax Highlighting**
 - Functionality: Automatically detects and highlights code blocks in chat messages with language-specific syntax coloring
 - Purpose: Makes code snippets easy to read and understand, providing a professional developer-friendly experience
@@ -113,6 +120,9 @@ This is a chat interface with file upload capabilities and conversational AI - i
 - **Personality Preset Loading**: Default to "Friendly Assistant" if no personality is selected or invalid ID stored
 - **Personality Switching**: Apply new personality immediately to next bot response after save, no regeneration of previous messages
 - **Personality Persistence**: Save personality selection per user account, maintain across sessions
+- **AI Model Selection**: Default to GPT-4o if no model is selected or invalid model ID stored
+- **AI Model Switching**: Apply new model immediately to next bot response after save, maintain model selection across sessions
+- **AI Model Persistence**: Save model selection per user account, each user can have different preferred model
 - **ZIP File Handling**: ZIP archives are recognized but not extracted - bot references them as archives
 - **Code File Processing**: Code files (JS, TS, PY, etc.) are read as text and displayed with syntax awareness
 - **Multiple File Attachments**: Support attaching multiple files in messages and knowledge base

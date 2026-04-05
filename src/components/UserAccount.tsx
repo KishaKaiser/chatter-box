@@ -31,6 +31,7 @@ export interface UserAccount {
   preferredName?: string
   chatbotName?: string
   personalityPreset?: string
+  aiModel?: string
 }
 
 interface UserAccountProps {

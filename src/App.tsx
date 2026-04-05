@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { WebSearch, SearchResult } from "@/components/WebSearch"
 import { getPersonalityPrompt } from "@/lib/personality-presets"
+import { getModelById, DEFAULT_MODEL } from "@/lib/ai-models"
 import mouthIcon from "@/assets/images/mouth.jpg"
 
 type Thread = {
@@ -176,6 +177,7 @@ Return ONLY the JSON object, no other text.`
       const chatbotName = currentUser?.chatbotName || "Assistant"
       const preferredName = currentUser?.preferredName || currentUser?.username || "there"
       const personalityPreset = currentUser?.personalityPreset || "default"
+      const selectedModel = currentUser?.aiModel || DEFAULT_MODEL
 
       const baseSystemPrompt = getPersonalityPrompt(personalityPreset)
       const systemPrompt = `You are ${chatbotName}. Address the user as ${preferredName}. ${baseSystemPrompt}`
@@ -194,7 +196,7 @@ ${preferredName}: ${trimmedInput}
 
 ${chatbotName}:`
 
-      const response = await window.spark.llm(prompt, "gpt-4o")
+      const response = await window.spark.llm(prompt, selectedModel)
 
       addMessage({
         role: "bot",

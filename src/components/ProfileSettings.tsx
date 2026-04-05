@@ -28,6 +28,7 @@ import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
 import { useKV } from "@github/spark/hooks"
 import { PERSONALITY_PRESETS } from "@/lib/personality-presets"
+import { AI_MODELS, DEFAULT_MODEL } from "@/lib/ai-models"
 
 export interface CustomVoiceFile {
   id: string
@@ -101,6 +102,7 @@ export function ProfileSettings({
   const [chatbotName, setChatbotName] = useState(currentUser.chatbotName || "Chatter Box")
   const [selectedAvatar, setSelectedAvatar] = useState(currentUser.avatarUrl || "")
   const [selectedPersonality, setSelectedPersonality] = useState(currentUser.personalityPreset || "default")
+  const [selectedModel, setSelectedModel] = useState(currentUser.aiModel || DEFAULT_MODEL)
   const [customAvatarUrl, setCustomAvatarUrl] = useState("")
   const [isDragging, setIsDragging] = useState(false)
   const [imageEditorOpen, setImageEditorOpen] = useState(false)
@@ -135,6 +137,7 @@ export function ProfileSettings({
       chatbotName: chatbotName.trim(),
       avatarUrl: selectedAvatar || undefined,
       personalityPreset: selectedPersonality,
+      aiModel: selectedModel,
     }
 
     onUpdateProfile(updatedUser)
@@ -362,6 +365,41 @@ export function ProfileSettings({
               <p className="text-xs text-muted-foreground">
                 Customize what you call your AI assistant
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="aiModel">AI Model</Label>
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger id="aiModel" className="w-full text-[15px]">
+                  <SelectValue placeholder="Select AI model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_MODELS.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium">{model.name}</span>
+                        <span className="text-xs text-muted-foreground">{model.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {AI_MODELS.find(m => m.id === selectedModel) && (
+                  <>
+                    <Badge variant="secondary" className="text-xs">
+                      {AI_MODELS.find(m => m.id === selectedModel)?.speed === "fast" && "⚡ Fast"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.speed === "balanced" && "⚖️ Balanced"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.speed === "slow" && "🐢 Thoughtful"}
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {AI_MODELS.find(m => m.id === selectedModel)?.quality === "good" && "✓ Good"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.quality === "great" && "✓✓ Great"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.quality === "excellent" && "✓✓✓ Excellent"}
+                    </Badge>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">
