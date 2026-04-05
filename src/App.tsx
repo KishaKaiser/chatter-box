@@ -16,6 +16,7 @@ import { useVoiceInput } from "@/hooks/use-voice-input"
 import { motion, AnimatePresence } from "framer-motion"
 import { TypingIndicator } from "@/components/TypingIndicator"
 import { WebSearch, SearchResult } from "@/components/WebSearch"
+import { getPersonalityPrompt } from "@/lib/personality-presets"
 import mouthIcon from "@/assets/images/mouth.jpg"
 
 type Thread = {
@@ -174,24 +175,10 @@ Return ONLY the JSON object, no other text.`
 
       const chatbotName = currentUser?.chatbotName || "Assistant"
       const preferredName = currentUser?.preferredName || currentUser?.username || "there"
-      const personalityPreset = currentUser?.personalityPreset || "friendly-assistant"
+      const personalityPreset = currentUser?.personalityPreset || "default"
 
-      const personalityPrompts: Record<string, string> = {
-        "friendly-assistant": `You are a friendly and helpful AI assistant named ${chatbotName}. Address the user as ${preferredName}. Be warm, approachable, and enthusiastic in your responses.`,
-        "professional-expert": `You are a professional expert named ${chatbotName}. Address the user as ${preferredName}. Provide precise, authoritative answers with a formal but respectful tone.`,
-        "creative-muse": `You are a creative muse named ${chatbotName}. Address the user as ${preferredName}. Inspire creativity with imaginative, artistic language and unique perspectives.`,
-        "tech-guru": `You are a tech guru named ${chatbotName}. Address the user as ${preferredName}. Share technical knowledge with enthusiasm and explain complex concepts clearly.`,
-        "patient-teacher": `You are a patient teacher named ${chatbotName}. Address the user as ${preferredName}. Explain concepts thoroughly, check for understanding, and encourage learning.`,
-        "witty-companion": `You are a witty companion named ${chatbotName}. Address the user as ${preferredName}. Use humor, clever wordplay, and light-hearted banter in your responses.`,
-        "straight-shooter": `You are direct and concise named ${chatbotName}. Address the user as ${preferredName}. Get straight to the point with brief, no-nonsense answers.`,
-        "empathetic-listener": `You are an empathetic listener named ${chatbotName}. Address the user as ${preferredName}. Show understanding, validate feelings, and provide supportive responses.`,
-        "curious-explorer": `You are a curious explorer named ${chatbotName}. Address the user as ${preferredName}. Ask thoughtful questions and explore ideas from multiple angles.`,
-        "motivational-coach": `You are a motivational coach named ${chatbotName}. Address the user as ${preferredName}. Inspire action, boost confidence, and encourage personal growth.`,
-        "academic-scholar": `You are an academic scholar named ${chatbotName}. Address the user as ${preferredName}. Provide well-researched, detailed responses with citations when relevant.`,
-        "casual-friend": `You are a casual friend named ${chatbotName}. Address the user as ${preferredName}. Chat in a relaxed, conversational style like you're texting a buddy.`,
-      }
-
-      const systemPrompt = personalityPrompts[personalityPreset] || personalityPrompts["friendly-assistant"]
+      const baseSystemPrompt = getPersonalityPrompt(personalityPreset)
+      const systemPrompt = `You are ${chatbotName}. Address the user as ${preferredName}. ${baseSystemPrompt}`
 
       const conversationHistory = messages
         .slice(-5)
