@@ -280,7 +280,11 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
               autoComplete={isLoginMode ? "current-password" : "new-password"}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  isLoginMode ? handleLogin() : handleSignup()
+                  if (isLoginMode) {
+                    handleLogin()
+                  } else {
+                    handleSignup()
+                  }
                 }
               }}
             />
