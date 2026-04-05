@@ -47,7 +47,8 @@ interface Story {
   lastEditedAt?: number
 }
 
-// SavedStory type is reserved for future use when saved stories list view is fully implemented
+// TODO: use SavedStory type when saved stories list view is fully implemented
+// interface SavedStory { id: string; title: string; genre: string; savedAt: number; lastEditedAt: number; chapterCount: number }
 
 export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps) {
   const [currentTab, setCurrentTab] = useState<"setup" | "generate" | "view" | "saved">("saved")
