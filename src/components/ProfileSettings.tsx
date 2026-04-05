@@ -376,10 +376,7 @@ export function ProfileSettings({
                 <SelectContent>
                   {AI_MODELS.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium">{model.name}</span>
-                        <span className="text-xs text-muted-foreground">{model.description}</span>
-                      </div>
+                      <span className="font-medium">{model.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -393,9 +390,9 @@ export function ProfileSettings({
                       {AI_MODELS.find(m => m.id === selectedModel)?.speed === "slow" && "🐢 Thoughtful"}
                     </Badge>
                     <Badge variant="secondary" className="text-xs">
-                      {AI_MODELS.find(m => m.id === selectedModel)?.quality === "good" && "✓ Good"}
-                      {AI_MODELS.find(m => m.id === selectedModel)?.quality === "great" && "✓✓ Great"}
-                      {AI_MODELS.find(m => m.id === selectedModel)?.quality === "excellent" && "✓✓✓ Excellent"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.costTier === "low" && "💰 Low Cost"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.costTier === "medium" && "💰💰 Medium Cost"}
+                      {AI_MODELS.find(m => m.id === selectedModel)?.costTier === "high" && "💰💰💰 High Cost"}
                     </Badge>
                   </>
                 )}
