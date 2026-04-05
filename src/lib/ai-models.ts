@@ -1,11 +1,11 @@
 export interface AIModel {
   id: string
-  name: string
-  speed: "fast" | "balanced" | "slow"
-  costTier: "low" | "medium" | "high"
-}
+  costTier: "l
 
-export const AI_MODELS: AIModel[] = [
+  {
+ 
+
+  {
   {
     id: "gpt-4o",
     name: "GPT-4o",
@@ -18,7 +18,7 @@ export const AI_MODELS: AIModel[] = [
     speed: "fast",
     costTier: "low"
   }
-]
+
 
 export const DEFAULT_MODEL = "gpt-4o"
 
@@ -26,14 +26,4 @@ export function getModelById(id?: string): string {
   const model = AI_MODELS.find(m => m.id === id)
   return model?.id || DEFAULT_MODEL
 }
-
-
-
-
-
-
-
-
-
-
 
