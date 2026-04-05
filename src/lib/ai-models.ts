@@ -1,5 +1,5 @@
 export interface AIModel {
-  id: string
+  name: stri
   name: string
   description: string
   speed: "fast" | "balanced" | "slow"
@@ -7,16 +7,16 @@ export interface AIModel {
   costTier: "low" | "medium" | "high"
 }
 
-export const AI_MODELS: AIModel[] = [
   {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    description: "Most capable model with excellent reasoning",
-    speed: "balanced",
-    quality: "excellent",
-    costTier: "high"
-  },
   {
+    speed: "fast"
+    costTier: "low"
+]
+export const DEFAULT_M
+export function getModelB
+}
+
+
     id: "gpt-4o-mini",
     name: "GPT-4o Mini",
     description: "Fast and efficient for most tasks",
