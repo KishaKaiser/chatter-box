@@ -10,7 +10,7 @@ import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
 import { ProfileSettings } from "@/components/ProfileSettings"
 import { PaperPlaneRight, Chat, Image, BookOpen, Microphone, MicrophoneSlash, Robot } from "@phosphor-icons/react"
-import { toast } from "sonner"
+import { toast, Toaster } from "sonner"
 import { useKV } from "@github/spark/hooks"
 import { useVoiceInput } from "@/hooks/use-voice-input"
 import { motion, AnimatePresence } from "framer-motion"
@@ -47,7 +47,6 @@ function App() {
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [threadsOpen, setThreadsOpen] = useState(false)
   const [imageEditorOpen, setImageEditorOpen] = useState(false)
   const [imageEditorMode, setImageEditorMode] = useState<"edit" | "create" | "enhance">("edit")
   const [imageEditorUrl, setImageEditorUrl] = useState<string | undefined>(undefined)
@@ -273,6 +272,7 @@ ${chatbotName}:`
 
   return (
     <div className="min-h-screen bg-black text-foreground flex flex-col">
+      <Toaster position="top-right" richColors />
       <header className="border-b border-border bg-black px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={mouthIcon} alt="Chatter Box" className="w-12 h-12 object-contain" />
@@ -281,9 +281,80 @@ ${chatbotName}:`
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setThreadsOpen(true)}>
-            <Chat className="w-5 h-5 text-white" weight="fill" />
-          </Button>
+          <ConversationThreads
+            threads={(threads || []).map(t => ({
+              id: t.id,
+              title: t.title,
+              createdAt: t.createdAt,
+              lastUpdatedAt: t.lastUpdatedAt,
+              messageCount: t.messageIds.length,
+              archived: t.archived
+            }))}
+            currentThreadId={currentThreadId || "default"}
+            onThreadSelect={(threadId) => {
+              setCurrentThreadId(threadId)
+            }}
+            onThreadCreate={(title) => {
+              const newThread: Thread = {
+                id: `thread-${Date.now()}`,
+                title,
+                messageIds: [],
+                createdAt: Date.now(),
+                lastUpdatedAt: Date.now(),
+                archived: false,
+              }
+              setThreads((prev) => [...(prev || []), newThread])
+              setCurrentThreadId(newThread.id)
+            }}
+            onThreadRename={(threadId: string, newTitle: string) => {
+              setThreads((prev) => (prev || []).map((t) => (t.id === threadId ? { ...t, title: newTitle } : t)))
+            }}
+            onThreadArchive={(threadId: string) => {
+              setThreads((prev) => (prev || []).map((t) => (t.id === threadId ? { ...t, archived: true } : t)))
+              if (currentThreadId === threadId) {
+                const activeThreads = (threads || []).filter((t) => !t.archived && t.id !== threadId)
+                if (activeThreads.length > 0) {
+                  setCurrentThreadId(activeThreads[0].id)
+                }
+              }
+            }}
+            onThreadUnarchive={(threadId: string) => {
+              setThreads((prev) => (prev || []).map((t) => (t.id === threadId ? { ...t, archived: false } : t)))
+            }}
+            onBulkArchive={(threadIds: string[]) => {
+              setThreads((prev) => (prev || []).map((t) => 
+                threadIds.includes(t.id) ? { ...t, archived: true } : t
+              ))
+            }}
+            onBulkUnarchive={(threadIds: string[]) => {
+              setThreads((prev) => (prev || []).map((t) => 
+                threadIds.includes(t.id) ? { ...t, archived: false } : t
+              ))
+            }}
+            onThreadDelete={(threadId: string) => {
+              const activeThreads = (threads || []).filter((t) => !t.archived && t.id !== threadId)
+              
+              if (activeThreads.length === 0) {
+                toast.error("Cannot delete the last active thread")
+                return
+              }
+
+              setThreads((prev) => (prev || []).filter((t) => t.id !== threadId))
+
+              if (currentThreadId === threadId) {
+                setCurrentThreadId(activeThreads[0].id)
+              }
+
+              const threadMessages = (threads || []).find((t) => t.id === threadId)?.messageIds || []
+              setAllMessages((prev) => {
+                const newMessages = { ...(prev || {}) }
+                threadMessages.forEach((msgId) => delete newMessages[msgId])
+                return newMessages
+              })
+
+              toast.success("Thread deleted")
+            }}
+          />
           <Button variant="ghost" size="sm" onClick={() => setImageEditorOpen(true)}>
             <Image className="w-5 h-5 text-white" weight="fill" />
           </Button>
@@ -380,7 +451,29 @@ ${chatbotName}:`
         </div>
       </div>
 
-      <ConversationThreads
+      <ImageEditor
+        open={imageEditorOpen}
+        onClose={() => {
+          setImageEditorOpen(false)
+          setImageEditorUrl(undefined)
+        }}
+        imageUrl={imageEditorUrl}
+        mode={imageEditorMode}
+        onSaveToChat={handleImageSaveToChat}
+      />
+
+      <StoryCreator
+        open={storyCreatorOpen}
+        onClose={() => setStoryCreatorOpen(false)}
+        onSaveToChat={handleStorySaveToChat}
+      />
+
+      <ProfileSettings
+        currentUser={currentUser || { id: userKey, username: "Guest", email: "guest@example.com", createdAt: Date.now() }}
+        onUpdateProfile={(updatedUser) => setCurrentUser(updatedUser)}
+        knowledgeFiles={knowledgeFiles || []}
+        onAddFile={(file) => setKnowledgeFiles((prev) => [...(prev || []), file])}
+        onRemoveFile={(id) => setKnowledgeFiles((prev) => (prev || []).filter((f) => f.id !== id))}
         threads={(threads || []).map(t => ({
           id: t.id,
           title: t.title,
@@ -390,9 +483,7 @@ ${chatbotName}:`
           archived: t.archived
         }))}
         currentThreadId={currentThreadId || "default"}
-        onThreadSelect={(threadId) => {
-          setCurrentThreadId(threadId)
-        }}
+        onThreadSelect={(threadId) => setCurrentThreadId(threadId)}
         onThreadCreate={(title) => {
           const newThread: Thread = {
             id: `thread-${Date.now()}`,
@@ -420,6 +511,16 @@ ${chatbotName}:`
         onThreadUnarchive={(threadId: string) => {
           setThreads((prev) => (prev || []).map((t) => (t.id === threadId ? { ...t, archived: false } : t)))
         }}
+        onBulkArchive={(threadIds: string[]) => {
+          setThreads((prev) => (prev || []).map((t) => 
+            threadIds.includes(t.id) ? { ...t, archived: true } : t
+          ))
+        }}
+        onBulkUnarchive={(threadIds: string[]) => {
+          setThreads((prev) => (prev || []).map((t) => 
+            threadIds.includes(t.id) ? { ...t, archived: false } : t
+          ))
+        }}
         onThreadDelete={(threadId: string) => {
           const activeThreads = (threads || []).filter((t) => !t.archived && t.id !== threadId)
           
@@ -440,29 +541,12 @@ ${chatbotName}:`
             threadMessages.forEach((msgId) => delete newMessages[msgId])
             return newMessages
           })
-
-          toast.success("Thread deleted")
         }}
+        onImageSaveToChat={handleImageSaveToChat}
+        onStorySaveToChat={handleStorySaveToChat}
+        externalOpen={settingsOpen}
+        onExternalOpenChange={setSettingsOpen}
       />
-
-      <ImageEditor
-        open={imageEditorOpen}
-        onClose={() => {
-          setImageEditorOpen(false)
-          setImageEditorUrl(undefined)
-        }}
-        imageUrl={imageEditorUrl}
-        mode={imageEditorMode}
-        onSaveToChat={handleImageSaveToChat}
-      />
-
-      <StoryCreator
-        open={storyCreatorOpen}
-        onClose={() => setStoryCreatorOpen(false)}
-        onSaveToChat={handleStorySaveToChat}
-      />
-
-
     </div>
   )
 }
