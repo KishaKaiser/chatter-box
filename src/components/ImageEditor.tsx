@@ -11,24 +11,21 @@ import {
   ArrowCounterClockwise, 
   DownloadSimple, 
   Sparkle,
-  Image as ImageIcon,
   MagicWand,
   PaintBrush,
   Crop,
   SunDim,
-  Circle,
   Square,
   Eraser,
   FloppyDisk,
   Upload,
-  ArrowClockwise,
   ArrowCounterClockwise as RotateLeft,
   ArrowsClockwise as RotateRight,
   ArrowsLeftRight,
   Palette
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 interface ImageEditorProps {
   open: boolean
@@ -53,7 +50,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
   const [isDraggingImage, setIsDraggingImage] = useState(false)
   const [isCropping, setIsCropping] = useState(false)
   const [cropStart, setCropStart] = useState<{ x: number; y: number } | null>(null)
-  const [cropEnd, setCropEnd] = useState<{ x: number; y: number } | null>(null)
+  const [_cropEnd, setCropEnd] = useState<{ x: number; y: number } | null>(null)
   const [cropRect, setCropRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
   const [cropAspectRatio, setCropAspectRatio] = useState<number | null>(null)
   const [customRatioWidth, setCustomRatioWidth] = useState("")
@@ -162,12 +159,14 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     } else if (open && mode === "create") {
       resetCanvas()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, imageUrl, mode])
 
   useEffect(() => {
     if (originalImage && mode === "edit") {
       drawImage(originalImage)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brightness, contrast, saturation, blur, rotation, activeFilter, filterIntensity])
 
   const resetCanvas = () => {
@@ -308,7 +307,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     try {
       const promptText = window.spark.llmPrompt`Generate a detailed image based on this description: "${prompt}". Create a vivid, high-quality visual representation.`
       
-      const response = await window.spark.llm(promptText, "gpt-4o-mini")
+      await window.spark.llm(promptText, "gpt-4o-mini")
       
       const canvas = canvasRef.current
       if (!canvas) return
@@ -717,6 +716,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     ctx.fillRect(0, cropRect.y + cropRect.height, canvas.width, canvas.height - cropRect.y - cropRect.height)
 
     ctx.setLineDash([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cropRect, isCropping])
 
   return (

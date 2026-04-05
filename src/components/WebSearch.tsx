@@ -2,7 +2,7 @@ import { Globe, MagnifyingGlass, X } from "@phosphor-icons/react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 export interface SearchResult {
   title: string

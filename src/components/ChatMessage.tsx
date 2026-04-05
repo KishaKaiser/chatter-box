@@ -60,7 +60,7 @@ export function ChatMessage({ message, onRegenerate, onImageClick, userKey = "gu
     try {
       await navigator.clipboard.writeText(message.content)
       toast.success("Response copied to clipboard")
-    } catch (error) {
+    } catch {
       toast.error("Failed to copy response")
     }
   }

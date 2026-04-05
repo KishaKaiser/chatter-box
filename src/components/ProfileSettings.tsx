@@ -1,5 +1,5 @@
 import { useState, useRef, ChangeEvent, useEffect } from "react"
-import { User as UserIcon, Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote, Smiley } from "@phosphor-icons/react"
+import { Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote, Smiley } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"

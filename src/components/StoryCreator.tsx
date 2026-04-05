@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useKV } from "@github/spark/hooks"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand, Play, Pause, Stop, SpeakerHigh } from "@phosphor-icons/react"
+import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand, Play, Stop, SpeakerHigh } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -47,14 +47,7 @@ interface Story {
   lastEditedAt?: number
 }
 
-interface SavedStory {
-  id: string
-  title: string
-  genre: string
-  savedAt: number
-  lastEditedAt: number
-  chapterCount: number
-}
+// SavedStory type is reserved for future use when saved stories list view is fully implemented
 
 export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps) {
   const [currentTab, setCurrentTab] = useState<"setup" | "generate" | "view" | "saved">("saved")
@@ -65,7 +58,7 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   const [editingChapter, setEditingChapter] = useState<number | null>(null)
   const [editedContent, setEditedContent] = useState("")
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false)
-  const [customTemplates, setCustomTemplates] = useKV<CustomTemplate[]>("custom-story-templates", [])
+  const [customTemplates, _setCustomTemplates] = useKV<CustomTemplate[]>("custom-story-templates", [])
   
   const [storyTitle, setStoryTitle] = useState("")
   const [storyDescription, setStoryDescription] = useState("")
@@ -79,7 +72,7 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
   const [additionalNotes, setAdditionalNotes] = useState("")
   
   const [narratingChapter, setNarratingChapter] = useState<number | null>(null)
-  const [isPaused, setIsPaused] = useState(false)
+  const [_isPaused, setIsPaused] = useState(false)
   const [selectedVoice, setSelectedVoice] = useKV<string>("narration-voice", "")
   const [narrationRate, setNarrationRate] = useKV<number>("narration-rate", 1.0)
   const [narrationPitch, setNarrationPitch] = useKV<number>("narration-pitch", 1.0)
@@ -345,7 +338,7 @@ Make the story engaging, creative, and complete. Each chapter should be substant
         setting: setting || undefined,
         conflict: conflict || undefined,
         additionalNotes: additionalNotes || undefined,
-        chapters: parsed.chapters.map((ch: any) => ({
+        chapters: (parsed.chapters as { number: number; title: string; content: string }[]).map((ch) => ({
           id: `chapter-${ch.number}`,
           number: ch.number,
           title: ch.title,
@@ -618,7 +611,7 @@ Return only the chapter content as plain text, no JSON formatting.`
           </div>
         </DialogHeader>
 
-        <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as "setup" | "generate" | "view" | "saved")} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="px-6 pt-4 shrink-0">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="saved" disabled={isGenerating}>
