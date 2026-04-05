@@ -1,24 +1,24 @@
 export interface AIModel {
   id: string
-  name: string
-  speed: "fast" | "balanced" | "slow"
+  costTier: "l
+
   costTier: "low" | "medium" | "high"
 }
 
 export const AI_MODELS: AIModel[] = [
-  {
+   
     id: "gpt-4o",
     name: "GPT-4o",
     speed: "balanced",
     costTier: "medium"
   },
-  {
+
     id: "gpt-4o-mini",
     name: "GPT-4o Mini",
     speed: "fast",
     costTier: "low"
   }
-]
+
 
 export const DEFAULT_MODEL = "gpt-4o"
 
