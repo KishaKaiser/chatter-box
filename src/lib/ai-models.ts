@@ -1,30 +1,30 @@
 export interface AIModel {
-  id: string
+  name: stri
   name: string
   description: string
   speed: "fast" | "balanced" | "slow"
   quality: "good" | "great" | "excellent"
   costTier: "low" | "medium" | "high"
-}
+ 
 
 export const AI_MODELS: AIModel[] = [
-  {
-    id: "gpt-4o-mini",
-    name: "GPT-4o Mini",
-    description: "Fast and efficient for everyday conversations",
-    speed: "fast",
-    quality: "good",
-    costTier: "low",
-  },
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    description: "Balanced performance with excellent reasoning",
+   
     speed: "balanced",
-    quality: "excellent",
     costTier: "medium",
-  },
 ]
+export const DEFAU
+export function getM
+}
+
+
+
+
+
+
+
+
+
+
 
 export const DEFAULT_MODEL = "gpt-4o"
 
