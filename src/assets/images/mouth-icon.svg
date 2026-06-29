@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+  <g transform="translate(10, 10)">
+    <!-- Mouth/lips shape -->
+    <path d="M20 35 Q25 30 30 35 Q35 40 40 35 Q45 30 50 35 Q55 40 60 35 Q65 30 70 35 L70 45 Q65 50 60 45 Q55 40 50 45 Q45 50 40 45 Q35 40 30 45 Q25 50 20 45 Z" fill="currentColor"/>
+    
+    <!-- Sound waves -->
+    <path d="M75 25 Q80 30 75 35" stroke="currentColor" stroke-width="2" fill="none"/>
+    <path d="M80 20 Q87 30 80 40" stroke="currentColor" stroke-width="2" fill="none"/>
+    <path d="M85 15 Q94 30 85 45" stroke="currentColor" stroke-width="2" fill="none"/>
+    
+    <!-- Sparkles/decorative elements -->
+    <circle cx="15" cy="20" r="1.5" fill="currentColor"/>
+    <circle cx="12" cy="28" r="1" fill="currentColor"/>
+    <circle cx="18" cy="25" r="1" fill="currentColor"/>
+    <circle cx="72" cy="18" r="1.5" fill="currentColor"/>
+    <circle cx="70" cy="48" r="1" fill="currentColor"/>
+  </g>
+</svg>
