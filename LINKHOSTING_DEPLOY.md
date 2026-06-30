@@ -166,6 +166,16 @@ Then run from the backend working directory:
 - `npx prisma migrate deploy`
 - restart the backend site
 
+### `sh: prisma: not found` during `npm run build`
+This usually means LinkHosting installed only production dependencies before running the build. The backend now lists Prisma and TypeScript as regular dependencies so this works even when `NODE_ENV=production` is set.
+
+After pulling the latest code, rerun the backend deploy from the `backend` working directory:
+
+- `npm ci`
+- `npm run build`
+- `npx prisma migrate deploy`
+- restart the backend site
+
 ### “Invalid Git repository URL”
 You must enter only:
 - `https://github.com/KishaKaiser/chatter-box`
