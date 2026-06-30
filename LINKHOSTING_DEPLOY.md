@@ -85,6 +85,12 @@ Use these settings if LinkHosting lets you specify them:
 - **Build command:** `npm run build`
 - **Start command:** `node dist/index.js`
 
+Prisma also needs OpenSSL available on the server before `prisma generate` runs. If LinkHosting exposes system packages, add:
+
+- `openssl`
+
+If it uses Nixpacks from this repository, `nixpacks.toml` already requests OpenSSL.
+
 ### 2.4 Run Prisma migrations
 If LinkHosting provides a “run command” / “post-deploy command” feature, run:
 
@@ -139,6 +145,26 @@ If LinkHosting exposes an Nginx/Apache setting, ensure the equivalent of:
 ---
 
 ## 4) Common problems
+
+### Prisma OpenSSL / `libquery_engine-linux-musl.so.node` errors
+If the backend starts and then exits with an error like:
+
+- `Prisma failed to detect the libssl/openssl version`
+- `libquery_engine-linux-musl.so.node`
+- `Command 'node dist/index.js' exited with code 1`
+
+Install OpenSSL for the backend site, then rebuild the backend so Prisma regenerates its client on the server:
+
+- Debian/Ubuntu style server: install `openssl`
+- Alpine style server: install `openssl`
+- LinkHosting/Nixpacks: ensure `nixpacks.toml` includes `nixPkgs = ["nodejs_20", "openssl"]`
+
+Then run from the backend working directory:
+
+- `npm ci`
+- `npm run build`
+- `npx prisma migrate deploy`
+- restart the backend site
 
 ### “Invalid Git repository URL”
 You must enter only:
