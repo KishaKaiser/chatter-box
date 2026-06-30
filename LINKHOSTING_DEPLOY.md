@@ -85,7 +85,9 @@ Use these settings if LinkHosting lets you specify them:
 - **Build command:** `npm run build`
 - **Start command:** `node dist/index.js`
 
-Prisma also needs OpenSSL available on the server before `prisma generate` runs. If LinkHosting exposes system packages, add:
+This backend uses Prisma's JavaScript query engine with the MariaDB/MySQL driver adapter, which avoids the native Prisma/OpenSSL runtime dependency that can fail on restricted hosts.
+
+If LinkHosting still uses a native Prisma engine from an old deploy cache, clear the backend build cache and redeploy. If LinkHosting exposes system packages, it is still safe to add:
 
 - `openssl`
 
@@ -153,18 +155,20 @@ If the backend starts and then exits with an error like:
 - `libquery_engine-linux-musl.so.node`
 - `Command 'node dist/index.js' exited with code 1`
 
-Install OpenSSL for the backend site, then rebuild the backend so Prisma regenerates its client on the server:
+The current backend avoids Prisma's native engine by using Prisma's JavaScript query engine plus `@prisma/adapter-mariadb`. If you still see this error after deploying the latest code, LinkHosting is probably reusing an old build cache or old `node_modules`.
 
-- Debian/Ubuntu style server: install `openssl`
-- Alpine style server: install `openssl`
-- LinkHosting/Nixpacks: ensure `backend/nixpacks.toml` includes `nixPkgs = ["nodejs_20", "openssl"]`
-
-Then run from the backend working directory:
+Clear the backend deploy cache, then run from the backend working directory:
 
 - `npm ci`
 - `npm run build`
 - `npx prisma migrate deploy`
 - restart the backend site
+
+If the old native-engine error still appears after a clean rebuild, install OpenSSL for the backend site:
+
+- Debian/Ubuntu style server: install `openssl`
+- Alpine style server: install `openssl`
+- LinkHosting/Nixpacks: ensure `backend/nixpacks.toml` includes `nixPkgs = ["nodejs_20", "openssl"]`
 
 ### `sh: prisma: not found` during `npm run build`
 This usually means LinkHosting installed only production dependencies before running the build. The backend now lists Prisma and TypeScript as regular dependencies so this works even when `NODE_ENV=production` is set.
