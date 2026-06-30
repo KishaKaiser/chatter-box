@@ -89,7 +89,7 @@ Prisma also needs OpenSSL available on the server before `prisma generate` runs.
 
 - `openssl`
 
-If it uses Nixpacks from this repository, `nixpacks.toml` already requests OpenSSL.
+If it uses Nixpacks from this repository, both `nixpacks.toml` and `backend/nixpacks.toml` request OpenSSL. The backend copy matters when LinkHosting treats `backend/` as the app root.
 
 ### 2.4 Run Prisma migrations
 If LinkHosting provides a “run command” / “post-deploy command” feature, run:
@@ -157,7 +157,7 @@ Install OpenSSL for the backend site, then rebuild the backend so Prisma regener
 
 - Debian/Ubuntu style server: install `openssl`
 - Alpine style server: install `openssl`
-- LinkHosting/Nixpacks: ensure `nixpacks.toml` includes `nixPkgs = ["nodejs_20", "openssl"]`
+- LinkHosting/Nixpacks: ensure `backend/nixpacks.toml` includes `nixPkgs = ["nodejs_20", "openssl"]`
 
 Then run from the backend working directory:
 
