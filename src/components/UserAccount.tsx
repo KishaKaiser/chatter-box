@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
+import { api, removeToken, setToken } from "@/lib/api"
 
 export interface UserAccount {
   id: string
@@ -52,8 +53,6 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
   const [password, setPassword] = useState("")
   const [open, setOpen] = useState(false)
 
-  const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000"
-
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       toast.error("Please enter email and password")
@@ -61,17 +60,8 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
     }
 
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error ?? "Login failed")
-        return
-      }
-      localStorage.setItem("auth_token", data.token)
+      const data = await api.auth.login({ email: email.trim(), password })
+      setToken(data.token)
       const u = data.user
       const user: UserAccount = {
         id: u.id,
@@ -115,17 +105,8 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
     }
 
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password, username: username.trim() }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error ?? "Sign up failed")
-        return
-      }
-      localStorage.setItem("auth_token", data.token)
+      const data = await api.auth.register({ email: email.trim(), password, username: username.trim() })
+      setToken(data.token)
       const u = data.user
       const user: UserAccount = {
         id: u.id,
@@ -144,7 +125,7 @@ export function UserAccount({ currentUser, onLogin, onLogout, onOpenSettings, we
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("auth_token")
+    removeToken()
     onLogout()
     toast.success("Logged out successfully")
   }
