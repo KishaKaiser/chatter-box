@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { PaperPlaneRight } from "@phosphor-icons/react"
 import { v4 as uuidv4 } from "uuid"
-import { getToken, api } from "@/lib/api"
+import { getToken, api, ChatMessage as ApiMessage } from "@/lib/api"
 
 function App() {
   const [currentUser, setCurrentUser] = useLocalStorage<UserAccountType | null>("chatterbox_user", null)
@@ -132,17 +132,37 @@ function App() {
     setInput("")
     setIsTyping(true)
 
-    // TODO: connect to your AI provider here
-    setTimeout(() => {
-      const botMessage: Message = {
+    try {
+      // Build conversation history for context
+      const history: ApiMessage[] = (allMessages[threadId] ?? [])
+        .concat(userMessage)
+        .map(m => ({
+          role: m.role === "user" ? "user" : "assistant",
+          content: m.content,
+        }))
+
+      const systemPrompt = currentUser?.personalityPreset
+        ? `You are ${currentUser.chatbotName || "a helpful assistant"}. ${currentUser.personalityPreset}`
+        : `You are ${currentUser?.chatbotName || "a helpful assistant"}.`
+
+      const { content } = await api.chat.send(history, systemPrompt)
+
+      addMessage(threadId, {
         id: uuidv4(),
         role: "bot",
-        content: "AI integration not yet configured. Connect an AI provider in App.tsx to enable responses.",
+        content,
         timestamp: Date.now(),
-      }
-      addMessage(threadId, botMessage)
+      })
+    } catch (err) {
+      addMessage(threadId, {
+        id: uuidv4(),
+        role: "bot",
+        content: err instanceof Error ? `Error: ${err.message}` : "Something went wrong. Please try again.",
+        timestamp: Date.now(),
+      })
+    } finally {
       setIsTyping(false)
-    }, 1000)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

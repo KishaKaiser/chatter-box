@@ -66,7 +66,20 @@ export interface AuthResponse {
   user: ApiUser
 }
 
+export interface ChatMessage {
+  role: "user" | "assistant"
+  content: string
+}
+
 export const api = {
+  chat: {
+    send(messages: ChatMessage[], systemPrompt?: string) {
+      return request<{ content: string }>("/chat", {
+        method: "POST",
+        body: JSON.stringify({ messages, systemPrompt }),
+      })
+    },
+  },
   auth: {
     register(data: { email: string; password: string; username?: string }) {
       return request<AuthResponse>("/auth/register", {
