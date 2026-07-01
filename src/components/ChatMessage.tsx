@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { DotsThree } from "@phosphor-icons/react"
-import { useKV } from "@github/spark/hooks"
+import { useLocalStorage as useKV } from "@/hooks/use-local-storage"
 
 export type MessageAttachment = {
   id: string

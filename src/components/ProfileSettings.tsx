@@ -25,7 +25,7 @@ import { ImageEditor } from "@/components/ImageEditor"
 import { StoryCreator } from "@/components/StoryCreator"
 import { TextToImage } from "@/components/TextToImage"
 import { VoiceSettings } from "@/hooks/use-text-to-speech"
-import { useKV } from "@github/spark/hooks"
+import { useLocalStorage as useKV } from "@/hooks/use-local-storage"
 import { PERSONALITY_PRESETS } from "@/lib/personality-presets"
 import { AI_MODELS, DEFAULT_MODEL } from "@/lib/ai-models"
 

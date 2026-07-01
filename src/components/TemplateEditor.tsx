@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useKV } from "@github/spark/hooks"
+import { useLocalStorage as useKV } from "@/hooks/use-local-storage"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
