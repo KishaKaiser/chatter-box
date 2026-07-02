@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { useLocalStorage as useKV } from "@/hooks/use-local-storage"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand, Play, Stop, SpeakerHigh } from "@phosphor-icons/react"
+import { Sparkle, BookOpen, DownloadSimple, Plus, X, ArrowCounterClockwise, FloppyDisk, FolderOpen, Trash, MagicWand, Play, Stop, SpeakerHigh, ArrowLeft } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -558,57 +557,42 @@ Return only the chapter content as plain text, no JSON formatting.`
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-2xl flex items-center gap-2">
-                <BookOpen size={28} weight="fill" className="text-accent" />
-                Story Creator
-              </DialogTitle>
-              <DialogDescription>
-                Generate detailed stories with AI-powered creativity
-              </DialogDescription>
-            </div>
-            {story && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSaveStory}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
-                >
-                  <FloppyDisk size={16} weight="fill" />
-                  Save
-                </Button>
-                <Button
-                  onClick={handleDownload}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <DownloadSimple size={16} weight="bold" />
-                  Download
-                </Button>
-                <Button
-                  onClick={handleSaveToChat}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 border-accent/50 text-accent hover:bg-accent/10"
-                >
-                  <Sparkle size={16} weight="fill" />
-                  Send to Chat
-                </Button>
-              </div>
-            )}
-          </div>
-        </DialogHeader>
+  if (!open) return null
 
-        <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as "setup" | "generate" | "view" | "saved")} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <header className="border-b px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft size={20} weight="bold" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <BookOpen size={22} weight="fill" className="text-accent" />
+            <h1 className="text-xl font-bold">Story Creator</h1>
+          </div>
+        </div>
+        {story && (
+          <div className="flex gap-2">
+            <Button onClick={handleSaveStory} variant="outline" size="sm" className="gap-2 border-primary/50 text-primary hover:bg-primary/10">
+              <FloppyDisk size={16} weight="fill" />
+              Save
+            </Button>
+            <Button onClick={handleDownload} variant="outline" size="sm" className="gap-2">
+              <DownloadSimple size={16} weight="bold" />
+              Download
+            </Button>
+            <Button onClick={handleSaveToChat} variant="outline" size="sm" className="gap-2 border-accent/50 text-accent hover:bg-accent/10">
+              <Sparkle size={16} weight="fill" />
+              Send to Chat
+            </Button>
+          </div>
+        )}
+      </header>
+
+      <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as "setup" | "generate" | "view" | "saved")} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="px-6 pt-4 shrink-0">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full max-w-lg grid-cols-4">
               <TabsTrigger value="saved" disabled={isGenerating}>
                 <FolderOpen size={16} weight="fill" className="mr-1" />
                 Saved
@@ -626,7 +610,7 @@ Return only the chapter content as plain text, no JSON formatting.`
           </div>
 
           <ScrollArea className="flex-1 min-h-0">
-            <div className="px-6 py-6">
+            <div className="px-6 py-6 max-w-4xl mx-auto">
               <TabsContent value="saved" className="mt-0 space-y-4">
                 {sortedSavedStories && sortedSavedStories.length > 0 ? (
                   <div className="space-y-3">
@@ -1227,7 +1211,7 @@ Return only the chapter content as plain text, no JSON formatting.`
             </div>
           </ScrollArea>
         </Tabs>
-      </DialogContent>
+    </div>
 
       <AlertDialog open={!!storyToDelete} onOpenChange={() => setStoryToDelete(null)}>
         <AlertDialogContent>
@@ -1255,6 +1239,5 @@ Return only the chapter content as plain text, no JSON formatting.`
         onClose={() => setTemplateEditorOpen(false)}
         onSelectTemplate={handleSelectCustomTemplate}
       />
-    </Dialog>
   )
 }
