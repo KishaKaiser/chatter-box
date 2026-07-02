@@ -1,15 +1,8 @@
 import { useState, useRef, ChangeEvent, useEffect } from "react"
-import { Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote, Smiley } from "@phosphor-icons/react"
+import { Camera, Check, UploadSimple, X, File, FileImage, FilePdf, FileText, BookOpen, Image as ImageIcon, Chat, SpeakerHigh, Play, Pause, Trash, MusicNote, Smiley, ArrowLeft } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -273,39 +266,52 @@ export function ProfileSettings({
     }
   }
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Settings</DialogTitle>
-          <DialogDescription>
-            Manage your profile and knowledge base
-          </DialogDescription>
-        </DialogHeader>
+  if (!isOpen) return null
 
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Page header */}
+      <header className="border-b px-6 py-3 flex items-center gap-4 shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsOpen(false)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={20} weight="bold" />
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold">Settings</h1>
+          <p className="text-xs text-muted-foreground">Manage your profile and preferences</p>
+        </div>
+      </header>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-8">
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-8 gap-1">
-            <TabsTrigger value="profile" className="text-xs sm:text-sm">Profile</TabsTrigger>
-            <TabsTrigger value="personality" className="text-xs sm:text-sm">
-              <Smiley size={16} weight="fill" className="sm:mr-1" />
-              <span className="hidden sm:inline">Personality</span>
+          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 bg-muted/50 p-1 rounded-lg">
+            <TabsTrigger value="profile" className="text-sm">Profile</TabsTrigger>
+            <TabsTrigger value="personality" className="text-sm flex items-center gap-1">
+              <Smiley size={15} weight="fill" />
+              Personality
             </TabsTrigger>
-            <TabsTrigger value="voice" className="text-xs sm:text-sm">Voice</TabsTrigger>
-            <TabsTrigger value="knowledge" className="text-xs sm:text-sm">
+            <TabsTrigger value="voice" className="text-sm">Voice</TabsTrigger>
+            <TabsTrigger value="knowledge" className="text-sm flex items-center gap-1">
               Knowledge
-              <Badge variant="secondary" className="ml-1 text-xs hidden sm:inline-flex">
+              <Badge variant="secondary" className="text-xs">
                 {knowledgeFiles.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="conversations" className="text-xs sm:text-sm">
+            <TabsTrigger value="conversations" className="text-sm flex items-center gap-1">
               Chats
-              <Badge variant="secondary" className="ml-1 text-xs hidden sm:inline-flex">
+              <Badge variant="secondary" className="text-xs">
                 {threads.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="images" className="text-xs sm:text-sm">Images</TabsTrigger>
-            <TabsTrigger value="text-to-image" className="text-xs sm:text-sm">AI Art</TabsTrigger>
-            <TabsTrigger value="stories" className="text-xs sm:text-sm">Stories</TabsTrigger>
+            <TabsTrigger value="images" className="text-sm">Images</TabsTrigger>
+            <TabsTrigger value="text-to-image" className="text-sm">AI Art</TabsTrigger>
+            <TabsTrigger value="stories" className="text-sm">Stories</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6 py-4">
@@ -401,7 +407,7 @@ export function ProfileSettings({
 
             <div className="space-y-3">
               <Label>Choose Avatar</Label>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-6 gap-3">
                 {AVATAR_PRESETS.map((avatarUrl, index) => (
                   <button
                     key={index}
@@ -726,7 +732,8 @@ export function ProfileSettings({
             </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
+        </div>
+      </div>
 
       <ImageEditor
         open={imageEditorOpen}
@@ -741,7 +748,7 @@ export function ProfileSettings({
         onClose={() => setStoryCreatorOpen(false)}
         onSaveToChat={onStorySaveToChat}
       />
-    </Dialog>
+    </div>
   )
 }
 
