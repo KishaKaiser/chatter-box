@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { TemplateEditor, CustomTemplate } from "@/components/TemplateEditor"
 import { useTextToSpeech } from "@/hooks/use-text-to-speech"
+import { llm } from "@/lib/llm"
 
 interface StoryCreatorProps {
   open: boolean
@@ -289,7 +290,7 @@ export function StoryCreator({ open, onClose, onSaveToChat }: StoryCreatorProps)
       const chaptersCount = parseInt(numChapters)
       const lengthDesc = lengths.find(l => l.value === length)?.label || "Medium length"
       
-      const promptText = window.spark.llmPrompt`You are a creative fiction writer. Generate a detailed story with the following specifications:
+      const promptText = `You are a creative fiction writer. Generate a detailed story with the following specifications:
 
 Title: ${storyTitle}
 Description: ${storyDescription}
@@ -297,19 +298,14 @@ Genre: ${genre}
 Tone: ${tone}
 Length per chapter: ${lengthDesc}
 Number of chapters: ${chaptersCount}
-${mainCharacter ? `Main Character: ${mainCharacter}` : ''}
-${setting ? `Setting: ${setting}` : ''}
-${conflict ? `Central Conflict: ${conflict}` : ''}
-${additionalNotes ? `Additional Notes: ${additionalNotes}` : ''}
+${mainCharacter ? `Main Character: ${mainCharacter}` : ""}
+${setting ? `Setting: ${setting}` : ""}
+${conflict ? `Central Conflict: ${conflict}` : ""}
+${additionalNotes ? `Additional Notes: ${additionalNotes}` : ""}
 
-Create a complete story with ${chaptersCount} chapters. Each chapter should:
-- Have a compelling title
-- Be well-structured with beginning, middle, and end
-- Advance the plot meaningfully
-- Include vivid descriptions and engaging dialogue
-- Match the specified tone and genre
+Create a complete story with ${chaptersCount} chapters. Each chapter should have a compelling title, be well-structured, advance the plot meaningfully, include vivid descriptions and dialogue, and match the specified tone and genre.
 
-Return the response as a JSON object with this structure:
+Return ONLY a valid JSON object (no markdown, no explanation):
 {
   "chapters": [
     {
@@ -318,11 +314,9 @@ Return the response as a JSON object with this structure:
       "content": "Full chapter content with multiple paragraphs..."
     }
   ]
-}
+}`
 
-Make the story engaging, creative, and complete. Each chapter should be substantial and well-written.`
-
-      const response = await window.spark.llm(promptText, "gpt-4o", true)
+      const response = await llm(promptText, true)
       const parsed = JSON.parse(response)
       
       const storyId = story?.id || `story-${Date.now()}`
@@ -541,7 +535,7 @@ Make it engaging, match the tone and genre, and ensure it flows naturally from t
 
 Return only the chapter content as plain text, no JSON formatting.`
 
-      const newContent = await window.spark.llm(promptText, "gpt-4o-mini")
+      const newContent = await llm(promptText)
       
       setStory(prev => {
         if (!prev) return prev

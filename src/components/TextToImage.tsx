@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react"
+import { llm } from "@/lib/llm"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,96 +87,39 @@ export function TextToImage({ onSaveToChat }: TextToImageProps) {
       
       const enhancedPrompt = `Create an image of: ${prompt}. Style: ${styleModifier}. ${negativePrompt ? `Avoid: ${negativePrompt}.` : ""}`
 
-      const aiPrompt = window.spark.llmPrompt`You are an AI image composition expert with expertise in drawing complex subjects. Analyze this image request and create detailed canvas drawing instructions:
+      const aiPrompt = `You are an AI image composition expert. Analyze this image request and create detailed canvas drawing instructions.
 
 User Request: "${enhancedPrompt}"
 
-For COMPLEX SUBJECTS (faces, animals, people, creatures):
-- Break down anatomy into primitive shapes (circles, ellipses, curves)
-- Provide precise positioning with normalized coordinates (0-1)
-- Include layering order for depth
-- Add shading/highlight information
-- Specify facial features or animal-specific details
-
-For SIMPLE SUBJECTS (objects, landscapes, abstract):
-- Use standard composition techniques
-- Focus on color harmony and balance
-
-Return a JSON object:
+Return ONLY a valid JSON object (no markdown, no explanation):
 {
   "scene": {
-    "type": "face|animal|person|creature|object|landscape|abstract",
     "background": {
-      "type": "gradient|solid|pattern",
-      "colors": ["#hex1", "#hex2", "#hex3"],
-      "direction": "vertical|horizontal|radial|diagonal",
-      "pattern": "dots|stripes|grid"
+      "type": "gradient",
+      "colors": ["#hex1", "#hex2"],
+      "direction": "vertical"
     },
     "complexSubject": {
-      "type": "face|cat|dog|bird|horse|lion|deer|wolf|bear|elephant|other",
+      "type": "face|cat|dog|wolf|lion|other",
       "position": {"x": 0.5, "y": 0.5},
       "size": 0.7,
       "rotation": 0,
-      "baseColor": "#hex",
       "layers": [
-        {
-          "part": "head|body|ear|eye|nose|mouth|fur|feather",
-          "shape": "circle|ellipse|curve|bezier|arc",
-          "position": {"x": 0.5, "y": 0.4},
-          "size": 0.3,
-          "color": "#hex",
-          "rotation": 0,
-          "zIndex": 1
-        }
+        {"part": "head", "shape": "circle", "position": {"x": 0.0, "y": 0.0}, "size": 0.5, "color": "#hex", "rotation": 0, "zIndex": 1}
       ],
       "features": [
-        {
-          "type": "eye|pupil|nose|mouth|whisker|ear|fur|scale|feather",
-          "position": {"x": 0.48, "y": 0.42},
-          "size": 0.05,
-          "color": "#hex",
-          "shape": "circle|ellipse|line|arc",
-          "detail": "highlight|shadow|outline"
-        }
+        {"type": "eye", "position": {"x": 0.45, "y": 0.42}, "size": 0.06, "color": "#hex", "shape": "circle", "detail": "highlight"}
       ],
       "shading": [
-        {
-          "area": "left|right|top|bottom|center",
-          "type": "shadow|highlight",
-          "color": "#hex",
-          "opacity": 0.3,
-          "size": 0.2,
-          "position": {"x": 0.3, "y": 0.5}
-        }
+        {"area": "left", "type": "shadow", "color": "#000000", "opacity": 0.2, "size": 0.3, "position": {"x": 0.3, "y": 0.5}}
       ]
     },
-    "elements": [
-      {
-        "type": "circle|rectangle|triangle|star|ellipse|line|curve",
-        "position": {"x": 0.3, "y": 0.4},
-        "size": 0.2,
-        "color": "#hex",
-        "rotation": 0,
-        "text": "text content if applicable"
-      }
-    ],
-    "lighting": {
-      "type": "bright|dark|dramatic|soft",
-      "source": {"x": 0.8, "y": 0.2},
-      "intensity": 0.7
-    },
-    "textOverlay": {
-      "text": "overlay text",
-      "position": {"x": 0.5, "y": 0.1},
-      "size": "large|medium|small",
-      "color": "#hex"
-    }
+    "elements": [],
+    "lighting": {"type": "soft", "source": {"x": 0.8, "y": 0.2}, "intensity": 0.5}
   }
-}
+}`
 
-Use vibrant hex colors. For faces/animals, include at least 5-10 layers and features for detail. Return ONLY valid JSON.`
-
-      const response = await window.spark.llm(aiPrompt, "gpt-4o", true)
+      const response = await llm(aiPrompt, true)
       const sceneData = JSON.parse(response)
 
       const canvas = document.createElement('canvas')

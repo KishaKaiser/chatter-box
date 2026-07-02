@@ -26,6 +26,7 @@ import {
 } from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
+import { llm } from "@/lib/llm"
 
 interface ImageEditorProps {
   open: boolean
@@ -305,9 +306,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setIsGenerating(true)
 
     try {
-      const promptText = window.spark.llmPrompt`Generate a detailed image based on this description: "${prompt}". Create a vivid, high-quality visual representation.`
-      
-      await window.spark.llm(promptText, "gpt-4o-mini")
+      await llm(`Generate a detailed image based on this description: "${prompt}". Create a vivid, high-quality visual representation.`)
       
       const canvas = canvasRef.current
       if (!canvas) return
@@ -381,9 +380,7 @@ export function ImageEditor({ open, onClose, imageUrl, mode, onSaveToChat }: Ima
     setIsGenerating(true)
 
     try {
-      const promptText = `Describe specific image enhancement adjustments for: "${enhancePrompt}". Provide values for brightness (50-150), contrast (50-150), saturation (50-150) as a recommendation.`
-      
-      await window.spark.llm(promptText, "gpt-4o-mini")
+      await llm(`Describe specific image enhancement adjustments for: "${enhancePrompt}". Provide values for brightness (50-150), contrast (50-150), saturation (50-150) as a recommendation.`)
       
       const adjustments = {
         brightness: 110 + Math.random() * 20,

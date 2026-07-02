@@ -141,9 +141,13 @@ function App() {
           content: m.content,
         }))
 
-      const systemPrompt = currentUser?.personalityPreset
-        ? `You are ${currentUser.chatbotName || "a helpful assistant"}. ${currentUser.personalityPreset}`
-        : `You are ${currentUser?.chatbotName || "a helpful assistant"}.`
+      const personality = currentUser?.personalityPreset
+        ? ` ${currentUser.personalityPreset}`
+        : ""
+      const knowledgeContext = knowledgeFiles.length > 0
+        ? `\n\nYou have access to the following knowledge base files — use them when relevant:\n\n${knowledgeFiles.map(f => `[${f.name}]:\n${f.content}`).join("\n\n")}`
+        : ""
+      const systemPrompt = `You are ${currentUser?.chatbotName || "a helpful assistant"}.${personality}${knowledgeContext}`
 
       const { content } = await api.chat.send(history, systemPrompt)
 
